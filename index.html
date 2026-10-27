@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainTrack — ระบบติดตามการอบรมพนักงาน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- SheetJS for Excel import -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#ffffff;--bg2:#f7f7f5;--bg3:#f0f0ec;
+--text:#1a1a1a;--text2:#555;--text3:#999;
+--border:#e0e0da;--border2:#c8c8c0;
+--green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-text:#0F6E56;
+--blue:#185FA5;--blue-light:#E6F1FB;
+--amber:#854F0B;--amber-light:#FAEEDA;
+--red:#A32D2D;--red-light:#FCEBEB;
+--gray-light:#F1EFE8;--gray-text:#5F5E5A;
+--radius:8px;--radius-lg:12px;
+}
+body{font-family:'Sarabun',sans-serif;color:var(--text);font-size:14px;background:var(--bg3);min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.logo{padding:20px 18px 16px;font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.logo-icon{width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.nav-section{padding:14px 18px 4px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--text2);border-left:2px solid transparent;font-size:13px;transition:all 0.12s;user-select:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--bg);color:var(--green);border-left:2px solid var(--green);font-weight:600}
+.notif-badge{background:#E24B4A;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;font-weight:700;margin-left:auto}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+.topbar{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);position:sticky;top:0;z-index:50}
+.topbar-title{font-weight:700;font-size:17px}
+.content{padding:24px;flex:1}
+.page{display:none}.page.active{display:block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:500;transition:all 0.12s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.primary:hover{background:var(--green-dark)}
+.btn.danger{color:var(--red);border-color:transparent}
+.btn.danger:hover{background:var(--red-light);border-color:#E24B4A}
+.btn.warning{background:var(--amber-light);color:var(--amber);border-color:#EF9F27}
+.btn.sm{padding:5px 11px;font-size:12px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-bottom:4px}
+.stat-value{font-size:26px;font-weight:700}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:18px}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)}
+.card-header-title{font-weight:600;font-size:13px;color:var(--text2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 16px;text-align:left;font-weight:600;color:var(--text2);font-size:12px;border-bottom:1px solid var(--border);background:var(--bg2)}
+td{padding:11px 16px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green-text)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-gray{background:var(--gray-light);color:var(--gray-text)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-teal{background:#E1F5EE;color:#085041}
+input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;font-family:'Sarabun',sans-serif;transition:border-color 0.12s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.08)}
+.form-row{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600;display:block}
+.form-label.req::after{content:" *";color:#E24B4A}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--border);width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-weight:700;font-size:16px}
+.modal-body{padding:22px}
+.modal-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--green-light);color:var(--green-text);flex-shrink:0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.sidebar-user{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer}
+.sidebar-user:hover{background:var(--bg)}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--green-text);flex-shrink:0}
+.search-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.employee-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px}
+.emp-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;text-align:center;position:relative}
+.emp-card:hover{border-color:var(--green);box-shadow:0 4px 12px rgba(29,158,117,0.12)}
+.emp-card.blocked{opacity:0.6;border-color:#E24B4A}
+.emp-av{width:48px;height:48px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--green-text);margin:0 auto 12px}
+.detail-back{display:flex;align-items:center;gap:6px;color:var(--text2);cursor:pointer;font-size:13px;margin-bottom:18px;font-weight:500}
+.detail-back:hover{color:var(--text)}
+.qr-wrap{background:var(--bg2);border-radius:var(--radius-lg);padding:24px;text-align:center;border:1px solid var(--border);margin-bottom:16px}
+.qr-box{width:150px;height:150px;background:#fff;margin:0 auto 14px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);padding:8px}
+.progress-bar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--green);border-radius:3px}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.alert-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.export-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.export-card:hover{border-color:var(--green);background:var(--green-light)}
+.toast{position:fixed;bottom:28px;right:28px;background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;z-index:500;opacity:0;transition:opacity 0.3s,transform 0.3s;transform:translateY(8px);pointer-events:none;font-weight:500;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty{text-align:center;padding:48px 20px;color:var(--text2)}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#E1F5EE 0%,#f0f0ec 100%)}
+.login-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.08)}
+.role-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.role-btn{flex:1;padding:9px;text-align:center;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:600;border:none;background:transparent;transition:all 0.15s}
+.role-btn.active{background:var(--green);color:#fff}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,0.95);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.spinner{width:36px;height:36px;border:3px solid var(--green-light);border-top:3px solid var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.realtime-dot{width:8px;height:8px;background:#1D9E75;border-radius:50%;display:inline-block;margin-left:6px;animation:pulse 2s infinite;vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all 0.15s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);background:var(--green-light)}
+.col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+<div class="spinner"></div>
+<div style="font-size:13px;color:var(--text2)">กำลังเชื่อมต่อ Firebase...</div>
+</div>
+
+<div id="loginWrap" class="login-wrap" style="display:none">
+<div class="login-card">
+<div style="text-align:center;margin-bottom:24px">
+<div style="width:52px;height:52px;background:var(--green);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px">🎓</div>
+<div style="font-size:22px;font-weight:700">TrainTrack</div>
+<div style="font-size:13px;color:var(--text2);margin-top:4px">ระบบติดตามการอบรมพนักงาน</div>
+</div>
+<div class="role-toggle">
+<button class="role-btn active" id="btnAdmin" onclick="setRole('admin')">ผู้ดูแลระบบ</button>
+<button class="role-btn" id="btnUser" onclick="setRole('user')">พนักงาน</button>
+</div>
+<div class="form-row"><label class="form-label">ชื่อผู้ใช้</label><input type="text" id="loginUser" value="admin" placeholder="admin หรือ รหัสพนักงาน"></div>
+<div class="form-row"><label class="form-label">รหัสผ่าน</label><input type="password" id="loginPass" value="admin123" placeholder="admin123 หรือ รหัสพนักงาน" onkeydown="if(event.key==='Enter')doLogin()"></div>
+<div id="loginErr" style="font-size:12px;color:#E24B4A;margin-bottom:12px;display:none">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+<button class="btn primary" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">เข้าสู่ระบบ</button>
+<div style="margin-top:16px;font-size:11px;color:var(--text3);text-align:center;line-height:1.8">Admin: <b>admin</b> / <b>admin123</b><br>พนักงาน: <b>รหัสพนักงาน</b> / <b>รหัสพนักงาน</b></div>
+</div>
+</div>
+
+<div id="mainApp" class="app" style="display:none">
+<div class="sidebar">
+<div class="logo"><div class="logo-icon">🎓</div>TrainTrack</div>
+<div class="nav-section">หลัก</div>
+<div class="nav-item active" id="nav-dashboard" onclick="navTo('dashboard')">📊 ภาพรวม</div>
+<div class="nav-item" id="nav-notifications" onclick="navTo('notifications')">🔔 แจ้งเตือน <span class="notif-badge" id="notifCount" style="display:none">0</span></div>
+<div class="nav-section">จัดการ</div>
+<div class="nav-item" id="nav-courses" onclick="navTo('courses')">📚 วิชาอบรม</div>
+<div class="nav-item" id="nav-employees" onclick="navTo('employees')">👥 พนักงาน</div>
+<div class="nav-item" id="nav-checkin" onclick="navTo('checkin')">📱 เช็คชื่อ / QR</div>
+<div class="nav-item" id="nav-myprofile" onclick="navTo('myprofile')" style="display:none">👤 ประวัติของฉัน</div>
+<div class="nav-section">รายงาน</div>
+<div class="nav-item" id="nav-export" onclick="navTo('export')">⬇️ Export รายงาน</div>
+<div class="nav-item" id="nav-import" onclick="navTo('import')">⬆️ นำเข้าข้อมูล</div>
+<div class="sidebar-user" onclick="doLogout()">
+<div class="user-av" id="sidebarAv">AD</div>
+<div style="flex:1;min-width:0">
+<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sidebarName">Admin</div>
+<div style="font-size:11px;color:var(--text2)" id="sidebarRole">ผู้ดูแลระบบ</div>
+</div>
+<span style="font-size:12px;color:var(--text3)">ออก</span>
+</div>
+</div>
+
+<div class="main">
+<div class="topbar">
+<div class="topbar-title" id="pageTitle">ภาพรวม <span class="realtime-dot"></span></div>
+<div style="display:flex;gap:10px" id="topbarActions">
+<button class="btn" onclick="openModal('addCourseModal')">+ เพิ่มวิชา</button>
+<button class="btn primary" onclick="openModal('addEmpModal')">+ เพิ่มพนักงาน</button>
+</div>
+</div>
+<div class="content">
+
+<div class="page active" id="page-dashboard">
+<div class="stats-row">
+<div class="stat-card"><div class="stat-label">พนักงานทั้งหมด</div><div class="stat-value" id="s1">0</div><div class="stat-sub">คน</div></div>
+<div class="stat-card"><div class="stat-label">วิชาทั้งหมด</div><div class="stat-value" id="s2">0</div><div class="stat-sub">วิชา</div></div>
+<div class="stat-card"><div class="stat-label">อบรมเดือนนี้</div><div class="stat-value" id="s3">0</div><div class="stat-sub">วิชา</div></div>
+<div class="stat-card"><div class="stat-label">รายการเข้าอบรมรวม</div><div class="stat-value" id="s4">0</div><div class="stat-sub">ครั้ง</div></div>
+</div>
+<div id="alertBanner" style="display:none;background:var(--amber-light);border:1px solid #EF9F27;border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;align-items:center;gap:12px">
+<span style="font-size:20px">🔔</span>
+<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--amber)" id="alertText"></div></div>
+<button class="btn sm warning" onclick="navTo('notifications')">ดูทั้งหมด →</button>
+</div>
+<div class="two-col">
+<div><div class="section-title">วิชาที่จะจัดเร็วๆ นี้</div>
+<div class="card"><table><thead><tr><th>วิชา</th><th>วันที่</th><th>คน</th></tr></thead><tbody id="upcomingTbl"></tbody></table></div></div>
+<div><div class="section-title">อบรมที่ผ่านมา</div>
+<div class="card"><table><thead><tr><th>วิชา</th><th>ผู้เข้าร่วม</th><th>สถานะ</th></tr></thead><tbody id="recentTbl"></tbody></table></div></div>
+</div>
+</div>
+
+<div class="page" id="page-notifications">
+<div id="notifList"></div>
+<div style="margin-top:18px;padding:16px 18px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">
+<div style="font-size:14px;font-weight:600;margin-bottom:12px">⚙️ ตั้งค่าการแจ้งเตือน</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="n7" checked onchange="saveNotif()"> แจ้งเตือนก่อน 7 วัน</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="n3" checked onchange="saveNotif()"> แจ้งเตือนก่อน 3 วัน</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="n1" checked onchange="saveNotif()"> แจ้งเตือนก่อน 1 วัน</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="n0" checked onchange="saveNotif()"> แจ้งเตือนวันที่จัด</label>
+</div>
+</div>
+</div>
+
+<div class="page" id="page-courses">
+<div class="search-row">
+<input type="text" id="csQ" placeholder="ค้นหาวิชา..." style="max-width:260px" oninput="renderCourses()">
+<select id="csF" style="max-width:160px" onchange="renderCourses()"><option value="">ทุกสถานะ</option><option value="upcoming">กำลังจะมาถึง</option><option value="active">กำลังจัด</option><option value="done">เสร็จสิ้น</option><option value="cancelled">ยกเลิก</option></select>
+<select id="csT" style="max-width:160px" onchange="renderCourses()"><option value="">ทุกประเภท</option><option value="คอร์สเรียน">คอร์สเรียน</option><option value="คลาสเรียน">คลาสเรียน</option><option value="เวิร์คช็อป">เวิร์คช็อป</option><option value="โรเพลย์">โรเพลย์</option></select>
+</div>
+<div id="coursesList"></div>
+</div>
+
+<div class="page" id="page-course-detail">
+<div class="detail-back" onclick="navTo('courses')">← กลับรายการวิชา</div>
+<div id="courseDetailContent"></div>
+</div>
+
+<div class="page" id="page-employees">
+<div class="search-row">
+<input type="text" id="empQ" placeholder="ค้นหาพนักงาน..." style="max-width:260px" oninput="renderEmployees()">
+<select id="deptF" style="max-width:160px" onchange="renderEmployees()"><option value="">ทุกแผนก</option></select>
+<select id="branchF" style="max-width:160px" onchange="renderEmployees()"><option value="">ทุกสาขา</option></select>
+<select id="statusF" style="max-width:160px" onchange="renderEmployees()"><option value="">ทุกสถานะ</option><option value="active">ปกติ</option><option value="blocked">ถูกบล็อก</option></select>
+</div>
+<div id="empGrid" class="employee-grid"></div>
+</div>
+
+<div class="page" id="page-emp-detail">
+<div class="detail-back" onclick="navTo('employees')">← กลับรายชื่อพนักงาน</div>
+<div id="empDetailContent"></div>
+</div>
+
+<div class="page" id="page-myprofile">
+<div id="myprofileContent"></div>
+</div>
+
+<div class="page" id="page-checkin">
+<div style="max-width:500px;margin:0 auto">
+<div class="section-title">เช็คชื่อเข้าอบรม</div>
+<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-header-title">เลือกวิชา</span></div>
+<div style="padding:16px"><label class="form-label req">วิชาที่จะเช็คชื่อ</label>
+<select id="checkinCourse" onchange="showQR()"><option value="">— เลือกวิชา —</option></select></div></div>
+<div id="checkinQRSec" style="display:none">
+<div class="qr-wrap">
+<div class="qr-box" id="qrCanvas"></div>
+<div style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:4px" id="qrLabel"></div><div id="checkinUrlDisplay" style="font-size:10px;color:var(--text3);word-break:break-all;margin-top:4px"></div>
+<div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+<button class="btn sm" onclick="simScan()">📱 จำลองสแกน</button>
+<button class="btn sm" onclick="printQR()">🖨️ พิมพ์ QR</button>
+</div></div>
+<div class="card"><div class="card-header"><span class="card-header-title" id="checkinTitle">กรอกข้อมูล</span></div>
+<div style="padding:16px">
+<div class="form-row"><label class="form-label req">รหัสพนักงาน หรือ ชื่อ-นามสกุล</label>
+<input type="text" id="checkinIn" placeholder="เช่น EMP001 หรือ สมชาย" oninput="searchEmpCheckin()"></div>
+<div id="checkinSug" style="margin-top:-10px;margin-bottom:12px"></div>
+<div id="checkinPrev" style="display:none;background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:14px;border:1px solid var(--border)">
+<div style="display:flex;align-items:center;gap:12px">
+<div class="avatar" id="prevAv" style="width:40px;height:40px;font-size:14px"></div>
+<div><div style="font-weight:600;font-size:14px" id="prevName"></div><div style="font-size:12px;color:var(--text2)" id="prevDept"></div></div>
+</div></div>
+<button class="btn primary" style="width:100%;justify-content:center;padding:11px" onclick="doCheckin()">✓ ยืนยันเข้าร่วมอบรม</button>
+</div></div></div>
+<div id="checkinOK" style="display:none;text-align:center;padding:40px 20px">
+<div style="font-size:64px;margin-bottom:14px">✅</div>
+<div style="font-size:20px;font-weight:700" id="okName"></div>
+<div style="font-size:14px;color:var(--text2);margin-top:6px" id="okCourse"></div>
+<div style="font-size:12px;color:var(--text3);margin-top:4px" id="okTime"></div>
+<button class="btn" style="margin-top:20px" onclick="resetCheckin()">↺ เช็คชื่อคนต่อไป</button>
+</div></div>
+</div>
+
+<div class="page" id="page-export">
+<div class="section-title">Export รายงาน</div>
+<div class="export-grid">
+<div class="export-card" onclick="expAll()"><div style="font-size:32px;margin-bottom:10px">📊</div><div style="font-weight:700;font-size:14px;margin-bottom:4px">รายงานการเข้าอบรมทั้งหมด</div><div style="font-size:12px;color:var(--text2)">รายชื่อผู้เข้าอบรมทุกวิชา</div><div style="margin-top:10px"><span class="badge badge-green">CSV</span></div></div>
+<div class="export-card" onclick="expEmp()"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-weight:700;font-size:14px;margin-bottom:4px">รายงานรายบุคคล</div><div style="font-size:12px;color:var(--text2)">สรุปวิชาที่แต่ละคนผ่านมา</div><div style="margin-top:10px"><span class="badge badge-blue">CSV</span></div></div>
+<div class="export-card" onclick="expCourse()"><div style="font-size:32px;margin-bottom:10px">📋</div><div style="font-weight:700;font-size:14px;margin-bottom:4px">รายงานรายวิชา</div><div style="font-size:12px;color:var(--text2)">สรุปผู้เข้าร่วมแต่ละวิชา</div><div style="margin-top:10px"><span class="badge badge-amber">CSV</span></div></div>
+<div class="export-card" onclick="expMissing()"><div style="font-size:32px;margin-bottom:10px">⚠️</div><div style="font-weight:700;font-size:14px;margin-bottom:4px">พนักงานที่ยังไม่ได้อบรม</div><div style="font-size:12px;color:var(--text2)">รายชื่อที่ยังไม่เคยเข้าอบรม</div><div style="margin-top:10px"><span class="badge badge-red">CSV</span></div></div>
+</div>
+<div class="section-title">Export ตามวิชาที่เลือก</div>
+<div class="card"><div class="card-header"><span class="card-header-title">เลือกวิชา</span></div>
+<div style="padding:16px;display:flex;gap:10px;align-items:center">
+<select id="expCourseSelect" style="flex:1" onchange="updExpPreview()"></select>
+<button class="btn primary sm" onclick="expSingle()">⬇ Export วิชานี้</button>
+</div>
+<div style="padding:0 16px 14px;font-size:12px;color:var(--text2)" id="expPreview"></div></div>
+</div>
+
+<div class="page" id="page-import">
+<div style="max-width:600px">
+<div class="section-title">นำเข้าข้อมูลพนักงาน</div>
+
+<!-- Upload Zone -->
+<div class="card" style="margin-bottom:18px">
+<div class="card-header"><span class="card-header-title">📁 อัปโหลดไฟล์</span></div>
+<div style="padding:18px">
+<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+<div style="font-size:36px;margin-bottom:10px">📂</div>
+<div style="font-size:14px;font-weight:600;margin-bottom:6px">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+<div style="font-size:12px;color:var(--text2)">รองรับ .xlsx, .xls, .csv</div>
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="onFileSelect(event)">
+</div>
+<div style="margin-top:14px;padding:12px 14px;background:var(--bg2);border-radius:var(--radius);font-size:12px;color:var(--text2)">
+<b>คอลัมน์ที่ต้องมี:</b> รหัสพนักงาน, ชื่อ, นามสกุล, แผนก<br><b>คอลัมน์เพิ่มเติม:</b> สาขา, ตำแหน่ง — รหัสผ่านจะใช้รหัสพนักงานอัตโนมัติ
+</div>
+<div style="margin-top:10px;display:flex;gap:8px">
+<button class="btn sm" onclick="loadSample()">📋 โหลดข้อมูลตัวอย่าง</button>
+<button class="btn sm" onclick="downloadTemplate()">⬇ ดาวน์โหลด Template Excel</button>
+</div>
+</div>
+</div>
+
+<!-- Preview -->
+<div id="importPrev" style="display:none">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<div class="section-title" style="font-size:14px;margin-bottom:0">ตัวอย่างข้อมูลที่จะนำเข้า (<span id="importCount">0</span> คน)</div>
+<div id="importWarnBadge"></div>
+</div>
+<div class="card"><table><thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th><th>สาขา</th><th>ตำแหน่ง</th><th>สถานะ</th></tr></thead><tbody id="importTbl"></tbody></table></div>
+<div style="display:flex;gap:10px;margin-top:14px">
+<button class="btn primary" onclick="confirmImport()">✓ นำเข้าทั้งหมด</button>
+<button class="btn" onclick="cancelImport()">✕ ยกเลิก</button>
+</div>
+</div>
+</div>
+</div>
+
+</div></div></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="addCourseModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title">📚 เพิ่มวิชาอบรม</div><button class="btn sm" onclick="closeModal('addCourseModal')">✕</button></div>
+<div class="modal-body">
+<div class="form-row"><label class="form-label req">ชื่อวิชา</label><input type="text" id="nc_name" placeholder="เช่น ความปลอดภัยในการทำงาน"></div>
+<div class="form-row"><label class="form-label">ประเภท</label><select id="nc_type"><option>คอร์สเรียน</option><option>คลาสเรียน</option><option>เวิร์คช็อป</option><option>โรเพลย์</option></select></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">วันที่เริ่ม</label><input type="date" id="nc_dateStart"></div>
+<div class="form-row"><label class="form-label">วันที่สิ้นสุด</label><input type="date" id="nc_dateEnd"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">เวลาเริ่ม</label><input type="time" id="nc_timeStart"></div>
+<div class="form-row"><label class="form-label">เวลาสิ้นสุด</label><input type="time" id="nc_timeEnd"></div>
+</div>
+<div class="form-row"><label class="form-label">ที่นั่งสูงสุด</label><input type="number" id="nc_max" placeholder="ว่างไว้ = ไม่จำกัด"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">สถานที่</label><input type="text" id="nc_loc"></div>
+<div class="form-row"><label class="form-label">วิทยากร</label><input type="text" id="nc_ins"></div>
+</div>
+<div class="form-row"><label class="form-label">รายละเอียด</label><textarea id="nc_desc" rows="2"></textarea></div>
+</div>
+<div class="modal-footer"><button class="btn" onclick="closeModal('addCourseModal')">ยกเลิก</button><button class="btn primary" onclick="addCourse()">✓ บันทึก</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="addEmpModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title">👤 เพิ่มพนักงาน</div><button class="btn sm" onclick="closeModal('addEmpModal')">✕</button></div>
+<div class="modal-body">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">รหัสพนักงาน</label><input type="text" id="ne_id" placeholder="EMP050"></div>
+<div class="form-row"><label class="form-label req">แผนก</label><input type="text" id="ne_dept" placeholder="HR"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">ชื่อ</label><input type="text" id="ne_first"></div>
+<div class="form-row"><label class="form-label req">นามสกุล</label><input type="text" id="ne_last"></div>
+</div>
+<div class="form-row"><label class="form-label">ตำแหน่ง</label><input type="text" id="ne_pos"></div>
+<div class="form-row"><label class="form-label">รหัสผ่าน</label><input type="password" id="ne_pass" placeholder="ถ้าว่างไว้ = ใช้รหัสพนักงาน"></div>
+</div>
+<div class="modal-footer"><button class="btn" onclick="closeModal('addEmpModal')">ยกเลิก</button><button class="btn primary" onclick="addEmp()">✓ บันทึก</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editCourseModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title">✏️ แก้ไขวิชาอบรม</div><button class="btn sm" onclick="closeModal('editCourseModal')">✕</button></div>
+<div class="modal-body">
+<div class="form-row"><label class="form-label req">ชื่อวิชา</label><input type="text" id="ec_name" placeholder="ชื่อวิชา"></div>
+<div class="form-row"><label class="form-label">ประเภท</label><select id="ec_type"><option>คอร์สเรียน</option><option>คลาสเรียน</option><option>เวิร์คช็อป</option><option>โรเพลย์</option></select></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">วันที่เริ่ม</label><input type="date" id="ec_dateStart"></div>
+<div class="form-row"><label class="form-label">วันที่สิ้นสุด</label><input type="date" id="ec_dateEnd"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">เวลาเริ่ม</label><input type="time" id="ec_timeStart"></div>
+<div class="form-row"><label class="form-label">เวลาสิ้นสุด</label><input type="time" id="ec_timeEnd"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">สถานที่</label><input type="text" id="ec_loc"></div>
+<div class="form-row"><label class="form-label">วิทยากร</label><input type="text" id="ec_ins"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">ที่นั่งสูงสุด</label><input type="number" id="ec_max" placeholder="ว่างไว้ = ไม่จำกัด"></div>
+<div class="form-row"><label class="form-label">รายละเอียด</label><input type="text" id="ec_desc"></div>
+</div>
+</div>
+<div class="modal-footer"><button class="btn" onclick="closeModal('editCourseModal')">ยกเลิก</button><button class="btn primary" onclick="saveEditCourse()">✓ บันทึก</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editEmpModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title">✏️ แก้ไขข้อมูลพนักงาน</div><button class="btn sm" onclick="closeModal('editEmpModal')">✕</button></div>
+<div class="modal-body">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">รหัสพนักงาน</label><input type="text" id="edit_id" disabled style="background:var(--bg2);color:var(--text3)"></div>
+<div class="form-row"><label class="form-label req">แผนก</label><input type="text" id="edit_dept" placeholder="HR"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label req">ชื่อ</label><input type="text" id="edit_first"></div>
+<div class="form-row"><label class="form-label req">นามสกุล</label><input type="text" id="edit_last"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div class="form-row"><label class="form-label">ตำแหน่ง</label><input type="text" id="edit_pos"></div>
+<div class="form-row"><label class="form-label">สาขา</label><input type="text" id="edit_branch" placeholder="เช่น ระยอง, กรุงเทพ"></div>
+</div>
+<div class="form-row"><label class="form-label">รหัสผ่านใหม่</label><input type="password" id="edit_pass" placeholder="ว่างไว้ = ไม่เปลี่ยน"></div>
+</div>
+<div class="modal-footer"><button class="btn" onclick="closeModal('editEmpModal')">ยกเลิก</button><button class="btn primary" onclick="saveEditEmp()">✓ บันทึก</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="confirmDeleteModal">
+<div class="modal" style="max-width:420px">
+<div class="modal-header"><div class="modal-title">⚠️ ยืนยันการลบพนักงาน</div></div>
+<div class="modal-body">
+<div style="font-size:14px;line-height:1.6" id="confirmDeleteText"></div>
+<div style="margin-top:14px;padding:12px;background:var(--red-light);border-radius:var(--radius);font-size:12px;color:var(--red)">
+⚠️ จะลบประวัติการอบรมทั้งหมดของพนักงานคนนี้ด้วย ไม่สามารถกู้คืนได้
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn" onclick="closeModal('confirmDeleteModal')">ยกเลิก</button>
+<button class="btn danger" style="border:1px solid #E24B4A" onclick="confirmDeleteEmp()">🗑️ ลบออกจากระบบ</button>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA7AOt7iaa8BIyilqSVuE52OUFrP-iRQjk",
+  authDomain: "traintrack-company.firebaseapp.com",
+  projectId: "traintrack-company",
+  storageBucket: "traintrack-company.firebasestorage.app",
+  messagingSenderId: "752189146976",
+  appId: "1:752189146976:web:e9fccbb9cdf97f1c0e4005"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ===== STATE =====
+let CU=null, CR='admin', SEL=null;
+let EMP=[], CRS=[];
+let NS={d7:true,d3:true,d1:true,d0:true};
+let deleteEmpId=null, importBuffer=[];
+const today=new Date();
+
+function fd(d){return d.toISOString().split('T')[0]}
+function ad(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x}
+function gs(c){
+  if(c.cancelled)return'cancelled';
+  var ds=c.dateStart||c.date||'';
+  var de=c.dateEnd||ds||'';
+  if(!ds)return'upcoming';
+  var d=new Date(ds),dEnd=new Date(de),t=new Date(today);
+  d.setHours(0,0,0,0);dEnd.setHours(23,59,59,0);t.setHours(0,0,0,0);
+  if(dEnd<t)return'done';
+  if(d<=t)return'active';
+  return'upcoming';
+}
+const THAI_MONTHS=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function toThaiDate(dateStr){
+  if(!dateStr)return'';
+  var parts=dateStr.split('-');
+  if(parts.length!==3)return dateStr;
+  var d=parseInt(parts[2]),m=parseInt(parts[1]),y=parseInt(parts[0])+543;
+  return d+' '+THAI_MONTHS[m]+' '+y;
+}
+function fmtDate(c){
+  var s=c.dateStart||c.date||'';
+  var e=(c.dateEnd&&c.dateEnd!==s)?c.dateEnd:'';
+  var dt=e?toThaiDate(s)+' – '+toThaiDate(e):toThaiDate(s);
+  var tm=c.timeStart?(c.timeEnd?' เวลา '+c.timeStart+'-'+c.timeEnd+' น.':' เวลา '+c.timeStart+' น.'):'';
+  return dt+tm;
+}
+function sb(s){
+  if(s==='done')return'<span class="badge badge-gray">เสร็จสิ้น</span>';
+  if(s==='active')return'<span class="badge badge-teal">กำลังจัด</span>';
+  if(s==='cancelled')return'<span class="badge badge-red">❌ ยกเลิก</span>';
+  return'<span class="badge badge-blue">กำลังจะมาถึง</span>';
+}
+function tb(t){var m={'คอร์สเรียน':'badge-blue','คลาสเรียน':'badge-green','เวิร์คช็อป':'badge-amber','โรเพลย์':'badge-red'};return'<span class="badge '+(m[t]||'badge-gray')+'">'+t+'</span>';}
+function ini(e){return((e.first||'?')[0]+((e.last||'?')[0]||'')).toUpperCase()}
+function fn(e){return(e.first||'')+' '+(e.last||'')}
+function ge(id){return EMP.find(e=>e.id===id)}
+function dd(ds){var d=new Date(ds),t=new Date(today);d.setHours(0,0,0,0);t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function ddC(c){return dd(c.dateStart||c.date||'');}
+
+function showToast(msg,type=''){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='error'?'#A32D2D':'#1a1a1a';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// expose globals
+window.openModal = id => { document.getElementById(id).style.display='flex'; };
+window.closeModal = id => { document.getElementById(id).style.display='none'; };
+window.setRole = setRole;
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.navTo = navTo;
+window.saveNotif = saveNotif;
+window.renderCourses = renderCourses;
+window.renderEmployees = renderEmployees;
+window.viewCourse = viewCourse;
+window.remAtt = remAtt;
+window.openQRForCourse = id => { navTo('checkin'); setTimeout(()=>{document.getElementById('checkinCourse').value=id;showQR();},80); };
+window.delCourse = delCourse;
+window.viewEmp = viewEmp;
+window.blockEmp = blockEmp;
+window.unblockEmp = unblockEmp;
+window.openDeleteEmp = openDeleteEmp;
+window.confirmDeleteEmp = confirmDeleteEmp;
+window.showQR = showQR;
+window.searchEmpCheckin = searchEmpCheckin;
+window.selEmp = selEmp;
+window.simScan = simScan;
+window.printQR = printQR;
+window.doCheckin = doCheckin;
+window.resetCheckin = resetCheckin;
+window.updExpPreview = updExpPreview;
+window.expAll = expAll;
+window.expEmp = expEmp;
+window.expCourse = expCourse;
+window.expMissing = expMissing;
+window.expSingle = expSingle;
+window.addCourse = addCourse;
+window.addEmp = addEmp;
+window.loadSample = loadSample;
+window.downloadTemplate = downloadTemplate;
+window.confirmImport = confirmImport;
+window.cancelImport = cancelImport;
+window.onDragOver = e => { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); };
+window.onDragLeave = () => document.getElementById('dropZone').classList.remove('drag-over');
+window.onDrop = e => { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); };
+window.onFileSelect = e => handleFile(e.target.files[0]);
+
+// ===== INIT DEFAULT DATA =====
+async function initDefaultData(){
+  // check if data exists by trying first employee
+  const {getDocs} = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+  const snap = await getDocs(collection(db,'employees'));
+  if(!snap.empty) return;
+  const emps=[
+    {id:'EMP001',first:'สมชาย',last:'ใจดี',dept:'HR',pos:'เจ้าหน้าที่ HR',pass:'1234',status:'active'},
+    {id:'EMP002',first:'วิภา',last:'รักเรียน',dept:'HR',pos:'ผู้จัดการ HR',pass:'1234',status:'active'},
+    {id:'EMP003',first:'ธนากร',last:'สุขสันต์',dept:'IT',pos:'นักพัฒนาระบบ',pass:'1234',status:'active'},
+    {id:'EMP004',first:'พิมพ์ใจ',last:'แสงทอง',dept:'IT',pos:'นักวิเคราะห์ระบบ',pass:'1234',status:'active'},
+    {id:'EMP005',first:'กิตติ',last:'มั่นคง',dept:'Finance',pos:'นักบัญชี',pass:'1234',status:'active'},
+    {id:'EMP006',first:'รัตนา',last:'ดีงาม',dept:'Finance',pos:'เจ้าหน้าที่การเงิน',pass:'1234',status:'active'},
+    {id:'EMP007',first:'ประยุทธ',last:'ชาญฉลาด',dept:'Operations',pos:'หัวหน้าฝ่ายปฏิบัติการ',pass:'1234',status:'active'},
+    {id:'EMP008',first:'สุดารัตน์',last:'พิทักษ์',dept:'Operations',pos:'เจ้าหน้าที่ปฏิบัติการ',pass:'1234',status:'active'},
+    {id:'EMP009',first:'นพดล',last:'ศรีวิไล',dept:'Sales',pos:'พนักงานขาย',pass:'1234',status:'active'},
+    {id:'EMP010',first:'จิรา',last:'บุญมี',dept:'Sales',pos:'ผู้จัดการขาย',pass:'1234',status:'active'},
+  ];
+  for(const e of emps) await setDoc(doc(db,'employees',e.id),e);
+  const crs=[
+    {id:'C001',name:'ความปลอดภัยในการทำงาน',type:'คอร์สเรียน',date:fd(ad(today,5)),location:'ห้องประชุม A',instructor:'อ.สมศักดิ์',max:30,desc:'ทักษะความปลอดภัยพื้นฐาน',attendees:['EMP001','EMP003','EMP007']},
+    {id:'C002',name:'Excel ขั้นสูง',type:'คลาสเรียน',date:fd(ad(today,12)),location:'ห้องอบรม 2',instructor:'อ.พัชรา',max:20,desc:'Excel ระดับสูง',attendees:['EMP002','EMP005','EMP006']},
+    {id:'C003',name:'การสื่อสารในองค์กร',type:'เวิร์คช็อป',date:fd(ad(today,-10)),location:'ห้องประชุมใหญ่',instructor:'อ.วิชัย',max:50,desc:'พัฒนาทักษะการสื่อสาร',attendees:['EMP001','EMP002','EMP004','EMP008','EMP009']},
+    {id:'C004',name:'การบริการลูกค้า',type:'โรเพลย์',date:fd(ad(today,-3)),location:'ห้อง Roleplay',instructor:'อ.มาลี',max:15,desc:'ฝึก roleplay',attendees:['EMP009','EMP010']},
+    {id:'C005',name:'ภาวะผู้นำ',type:'คอร์สเรียน',date:fd(ad(today,20)),location:'ออนไลน์',instructor:'อ.กิตติพงษ์',max:25,desc:'พัฒนาภาวะผู้นำ',attendees:[]},
+    {id:'C006',name:'กฎหมายแรงงาน',type:'คลาสเรียน',date:fd(ad(today,2)),location:'ห้องประชุม B',instructor:'อ.ประภา',max:40,desc:'ความรู้กฎหมายแรงงาน',attendees:['EMP002','EMP007']},
+  ];
+  for(const c of crs) await setDoc(doc(db,'courses',c.id),c);
+}
+
+// ===== REALTIME =====
+function startListeners(){
+  onSnapshot(collection(db,'employees'), snap=>{
+    EMP=snap.docs.map(d=>d.data());
+    refreshCurrent();
+  });
+  onSnapshot(collection(db,'courses'), snap=>{
+    CRS=snap.docs.map(d=>d.data());
+    refreshCurrent();
+  });
+}
+
+function refreshCurrent(){
+  updNotif();
+  const ap=document.querySelector('.page.active');
+  if(!ap)return;
+  const pid=ap.id.replace('page-','');
+  if(pid==='dashboard')renderDash();
+  if(pid==='courses')renderCourses();
+  if(pid==='employees')renderEmployees();
+  if(pid==='notifications')renderNotifs();
+  if(pid==='export')renderExport();
+  if(pid==='checkin')renderCheckin();
+  if(pid==='myprofile')renderMyProfile();
+}
+
+// ===== AUTH =====
+function setRole(r){
+  CR=r;
+  document.getElementById('btnAdmin').classList.toggle('active',r==='admin');
+  document.getElementById('btnUser').classList.toggle('active',r==='user');
+  document.getElementById('loginUser').value=r==='admin'?'admin':'EMP001';
+  document.getElementById('loginPass').value=r==='admin'?'admin123':'1234';
+}
+
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value.trim();
+  document.getElementById('loginErr').style.display='none';
+  if(CR==='admin'&&u==='admin'&&p==='admin123'){CU={role:'admin',name:'Admin',ini:'AD'};startApp();return;}
+  // Employee: empId = both username and password
+  const empId=String(u);
+  const emp=EMP.find(e=>String(e.id)===empId);
+  if(emp){
+    if(emp.status==='blocked'){
+      document.getElementById('loginErr').textContent='บัญชีนี้ถูกระงับ กรุณาติดต่อ Admin';
+      document.getElementById('loginErr').style.display='block';return;
+    }
+    // Accept: empId as password OR stored password
+    if(String(p)===empId||String(p)===String(emp.pass)){
+      CU={role:'user',emp,name:fn(emp),ini:ini(emp)};startApp();return;
+    }
+  }
+  document.getElementById('loginErr').style.display='block';
+}
+
+function startApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  document.getElementById('sidebarAv').textContent=CU.ini;
+  document.getElementById('sidebarName').textContent=CU.name;
+  document.getElementById('sidebarRole').textContent=CU.role==='admin'?'ผู้ดูแลระบบ':'พนักงาน';
+  if(CU.role==='user'){
+    ['nav-employees','nav-export','nav-import','nav-dashboard','nav-notifications'].forEach(id=>{var el=document.getElementById(id);if(el)el.style.display='none';});
+    document.getElementById('topbarActions').style.display='none';
+    var mp=document.getElementById('nav-myprofile');if(mp)mp.style.display='';
+    navTo('myprofile');
+    return;
+  }
+  navTo('dashboard');
+}
+
+function doLogout(){
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  CU=null;
+  ['nav-employees','nav-export','nav-import','nav-dashboard','nav-notifications'].forEach(id=>{var el=document.getElementById(id);if(el)el.style.display='';});
+  var mp=document.getElementById('nav-myprofile');if(mp)mp.style.display='none';
+  document.getElementById('topbarActions').style.display='';
+}
+
+// ===== NAV =====
+function navTo(p){
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  const pg=document.getElementById('page-'+p);if(pg)pg.classList.add('active');
+  const nm={'course-detail':'courses','emp-detail':'employees'};
+  const an=nm[p]||p;const el=document.getElementById('nav-'+an);if(el)el.classList.add('active');
+  const titles={dashboard:'ภาพรวม',notifications:'การแจ้งเตือน',courses:'วิชาอบรม',employees:'พนักงานทั้งหมด',checkin:'เช็คชื่อ / QR',export:'Export รายงาน',import:'นำเข้าข้อมูล',myprofile:'ประวัติการอบรมของฉัน'};
+  document.getElementById('pageTitle').innerHTML=(titles[p]||'')+' <span class="realtime-dot"></span>';
+  if(p==='dashboard')renderDash();
+  if(p==='notifications')renderNotifs();
+  if(p==='courses')renderCourses();
+  if(p==='employees')renderEmployees();
+  if(p==='checkin')renderCheckin();
+  if(p==='export')renderExport();
+}
+
+// ===== NOTIFICATIONS =====
+function getNotifs(){
+  var n=[];
+  CRS.filter(c=>gs(c)!=='done').forEach(c=>{
+    var df=ddC(c);
+    if(df===0&&NS.d0)n.push({lv:'red',c,df,msg:'วันนี้! "'+c.name+'" กำลังจัดอบรม'});
+    else if(df===1&&NS.d1)n.push({lv:'amber',c,df,msg:'พรุ่งนี้: "'+c.name+'"'});
+    else if(df<=3&&df>1&&NS.d3)n.push({lv:'amber',c,df,msg:'อีก '+df+' วัน: "'+c.name+'"'});
+    else if(df<=7&&df>3&&NS.d7)n.push({lv:'blue',c,df,msg:'อีก '+df+' วัน: "'+c.name+'"'});
+  });
+  return n.sort((a,b)=>a.df-b.df);
+}
+
+function updNotif(){
+  var n=getNotifs();
+  var b=document.getElementById('notifCount');
+  b.textContent=n.length;b.style.display=n.length?'':'none';
+  var ab=document.getElementById('alertBanner');
+  if(n.length){
+    ab.style.display='flex';
+    var urg=n.filter(x=>x.df<=1);
+    document.getElementById('alertText').textContent=urg.length?'มีการอบรม '+urg.length+' วิชาในวันนี้หรือพรุ่งนี้!':'มีการอบรม '+n.length+' วิชาที่กำลังจะมาใน 7 วัน';
+  } else ab.style.display='none';
+}
+
+function renderNotifs(){
+  var n=getNotifs();
+  var lc={red:'#E24B4A',amber:'#EF9F27',blue:'#378ADD'};
+  var html=n.length?`<div class="card"><div class="card-header"><span class="card-header-title">🔔 การแจ้งเตือน (${n.length})</span></div>`+
+    n.map(x=>`<div class="alert-item"><div class="alert-dot" style="background:${lc[x.lv]}"></div><div style="flex:1"><div style="font-size:13px;font-weight:600">${x.msg}</div><div style="font-size:12px;color:var(--text2);margin-top:3px">📅 ${fmtDate(x.c)}${x.c.location?' · 📍'+x.c.location:''} · 👥 ${x.c.attendees.length}${x.c.max?'/'+x.c.max:''} คน</div></div><button class="btn sm" onclick="viewCourse('${x.c.id}')">ดู</button></div>`).join('')+'</div>'
+  :`<div class="empty">🔕<br><br>ไม่มีการแจ้งเตือน</div>`;
+  document.getElementById('notifList').innerHTML=html;
+  document.getElementById('n7').checked=NS.d7;
+  document.getElementById('n3').checked=NS.d3;
+  document.getElementById('n1').checked=NS.d1;
+  document.getElementById('n0').checked=NS.d0;
+}
+
+function saveNotif(){
+  NS={d7:document.getElementById('n7').checked,d3:document.getElementById('n3').checked,d1:document.getElementById('n1').checked,d0:document.getElementById('n0').checked};
+  updNotif();renderNotifs();
+}
+
+// ===== DASHBOARD =====
+function renderDash(){
+  document.getElementById('s1').textContent=EMP.filter(e=>e.status!=='deleted').length;
+  document.getElementById('s2').textContent=CRS.length;
+  var m=today.toISOString().slice(0,7);
+  document.getElementById('s3').textContent=CRS.filter(c=>(c.dateStart||c.date||'').startsWith(m)).length;
+  document.getElementById('s4').textContent=CRS.reduce((s,c)=>s+c.attendees.length,0);
+  updNotif();
+  var up=CRS.filter(c=>gs(c)!=='done').sort((a,b)=>(a.dateStart||a.date||'').localeCompare(b.dateStart||b.date||'')).slice(0,5);
+  document.getElementById('upcomingTbl').innerHTML=up.length?up.map(c=>`<tr style="cursor:pointer" onclick="viewCourse('${c.id}')"><td><div style="font-weight:600;font-size:12px">${c.name}</div><div style="margin-top:3px">${tb(c.type)}</div></td><td style="font-size:12px;white-space:nowrap">${fmtDate(c)}</td><td><span class="badge badge-green">${c.attendees.length}${c.max?'/'+c.max:''}</span></td></tr>`).join(''):'<tr><td colspan="3" class="empty" style="padding:20px">ไม่มีวิชาที่จะมา</td></tr>';
+  var rc=CRS.filter(c=>gs(c)==='done').sort((a,b)=>(b.dateStart||b.date||'').localeCompare(a.dateStart||a.date||'')).slice(0,5);
+  document.getElementById('recentTbl').innerHTML=rc.length?rc.map(c=>`<tr style="cursor:pointer" onclick="viewCourse('${c.id}')"><td style="font-size:12px">${c.name}</td><td><span class="badge badge-green">${c.attendees.length} คน</span></td><td>${sb(gs(c))}</td></tr>`).join(''):'<tr><td colspan="3" class="empty" style="padding:20px">ยังไม่มีประวัติ</td></tr>';
+}
+
+// ===== COURSES =====
+function renderCourses(){
+  var q=(document.getElementById('csQ').value||'').toLowerCase();
+  var sf=document.getElementById('csF').value;
+  var tf=document.getElementById('csT').value;
+  var list=CRS.filter(c=>(!q||c.name.toLowerCase().includes(q))&&(!sf||gs(c)===sf)&&(!tf||c.type===tf)).sort((a,b)=>(a.dateStart||a.date||'').localeCompare(b.dateStart||b.date||''));
+  document.getElementById('coursesList').innerHTML=list.length?list.map(c=>{
+    var s=gs(c);var pct=c.max?Math.min(100,Math.round(c.attendees.length/c.max*100)):0;
+    return`<div class="card" style="cursor:pointer;${c.cancelled?'opacity:0.65;border-color:#E24B4A;':''}" onclick="viewCourse('${c.id}')">
+    <div class="card-header"><div style="display:flex;align-items:center;gap:8px">${tb(c.type)}<span style="font-weight:700;font-size:14px">${c.name}</span></div>
+    <div style="display:flex;align-items:center;gap:8px">${sb(s)}${CU&&CU.role==='admin'?`<button class="btn sm" onclick="event.stopPropagation();openEditCourse('${c.id}')">✏️</button>${c.cancelled?`<button class="btn sm" onclick="event.stopPropagation();toggleCancelCourse('${c.id}',false)">↩️</button>`:`<button class="btn sm danger" onclick="event.stopPropagation();toggleCancelCourse('${c.id}',true)">❌</button>`}<button class="btn sm danger" onclick="event.stopPropagation();delCourse('${c.id}')">✕ ลบ</button>`:''}</div></div>
+    <div style="padding:14px 18px"><div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:${c.max?'8':'0'}px">
+    <span style="font-size:12px;color:var(--text2)">📅 ${fmtDate(c)}</span>
+    ${c.location?`<span style="font-size:12px;color:var(--text2)">📍 ${c.location}</span>`:''}
+    ${c.instructor?`<span style="font-size:12px;color:var(--text2)">👤 ${c.instructor}</span>`:''}
+    <span style="font-size:12px;color:var(--text2)">👥 ${c.attendees.length}${c.max?' / '+c.max:''} คน</span>
+    </div>${c.max?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`:''}</div></div>`;
+  }).join(''):`<div class="empty">🔍<br><br>ไม่พบวิชาที่ค้นหา</div>`;
+}
+
+function viewCourse(id){
+  var c=CRS.find(x=>x.id===id);if(!c)return;
+  var s=gs(c);
+  document.getElementById('courseDetailContent').innerHTML=`
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+  <div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">${tb(c.type)}${sb(s)}</div>
+  <div style="font-size:22px;font-weight:700">${c.name}</div>${c.desc?`<div style="font-size:13px;color:var(--text2);margin-top:6px">${c.desc}</div>`:''}</div>
+  ${CU&&CU.role==='admin'?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn sm" onclick="openEditCourse('${c.id}')">✏️ แก้ไข</button>
+  <button class="btn sm primary" onclick="openQRForCourse('${c.id}')" ${c.cancelled?'disabled style="opacity:0.4"':''}>📱 QR เช็คชื่อ</button>
+  ${c.cancelled
+    ?`<button class="btn sm" onclick="toggleCancelCourse('${c.id}',false)">↩️ คืนสถานะ</button>`
+    :`<button class="btn sm danger" style="border:1px solid #E24B4A" onclick="toggleCancelCourse('${c.id}',true)">❌ ยกเลิกวิชา</button>`
+  }
+  </div>`:''}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px">
+  <div class="stat-card"><div class="stat-label">วันที่</div><div style="font-size:13px;font-weight:600;margin-top:4px">${fmtDate(c)}</div></div>
+  <div class="stat-card"><div class="stat-label">สถานที่</div><div style="font-size:13px;font-weight:600;margin-top:4px">${c.location||'-'}</div></div>
+  <div class="stat-card"><div class="stat-label">วิทยากร</div><div style="font-size:13px;font-weight:600;margin-top:4px">${c.instructor||'-'}</div></div>
+  <div class="stat-card"><div class="stat-label">ผู้เข้าร่วม</div><div style="font-size:13px;font-weight:600;margin-top:4px">${c.attendees.length}${c.max?' / '+c.max:''} คน</div></div>
+  </div>
+  <div class="section-title">รายชื่อผู้เข้าอบรม</div>
+  <div class="card"><table><thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th><th>ตำแหน่ง</th>${CU&&CU.role==='admin'?'<th></th>':''}</tr></thead>
+  <tbody>${c.attendees.length?c.attendees.map(aid=>{var e=ge(aid);return e?`<tr><td style="font-size:12px;color:var(--text2)">${e.id}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar">${ini(e)}</div>${fn(e)}${e.status==='blocked'?'<span class="badge badge-red" style="margin-left:6px;font-size:10px">บล็อก</span>':''}</div></td><td><span class="badge badge-gray">${e.dept}${e.branch?' · '+e.branch:''}</span></td><td style="font-size:12px;color:var(--text2)">${e.pos||'-'}</td>${CU&&CU.role==='admin'?`<td><button class="btn sm danger" onclick="remAtt('${c.id}','${e.id}')">✕</button></td>`:''}</tr>`:''}).join(''):`<tr><td colspan="${CU&&CU.role==='admin'?5:4}" class="empty" style="padding:24px">ยังไม่มีผู้เข้าร่วม</td></tr>`}
+  </tbody></table></div>`;
+  document.getElementById('pageTitle').innerHTML=c.name+' <span class="realtime-dot"></span>';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-course-detail').classList.add('active');
+}
+
+async function remAtt(cid,eid){
+  await updateDoc(doc(db,'courses',cid),{attendees:arrayRemove(eid)});
+  showToast('ลบรายชื่อเรียบร้อย');viewCourse(cid);
+}
+
+async function delCourse(id){
+  if(!confirm('ลบวิชานี้?'))return;
+  await deleteDoc(doc(db,'courses',id));
+  showToast('ลบวิชาเรียบร้อย');
+}
+
+async function toggleCancelCourse(id, cancel){
+  if(cancel && !confirm('ยืนยันยกเลิกวิชานี้?'))return;
+  await updateDoc(doc(db,'courses',id),{cancelled: cancel});
+  showToast(cancel ? '❌ ยกเลิกวิชาเรียบร้อย' : '✅ คืนสถานะวิชาเรียบร้อย');
+  // refresh
+  const ap=document.querySelector('.page.active');
+  if(ap){
+    const pid=ap.id.replace('page-','');
+    if(pid==='course-detail') viewCourse(id);
+    else renderCourses();
+  }
+}
+window.toggleCancelCourse = toggleCancelCourse;
+
+// ===== EMPLOYEES =====
+function renderEmployees(){
+  var q=(document.getElementById('empQ').value||'').toLowerCase();
+  var d=document.getElementById('deptF').value;
+  var sf=document.getElementById('statusF').value;
+  var visible=EMP.filter(e=>e.status!=='deleted');
+  var depts=[...new Set(visible.map(e=>e.dept))].sort();
+  var sel=document.getElementById('deptF');var cur=sel.value;
+  sel.innerHTML='<option value="">ทุกแผนก</option>'+depts.map(x=>`<option value="${x}"${x===cur?' selected':''}>${x}</option>`).join('');
+  var branches=[...new Set(visible.filter(e=>e.branch).map(e=>e.branch))].sort();
+  var bsel=document.getElementById('branchF');var bcur=bsel?bsel.value:'';
+  if(bsel)bsel.innerHTML='<option value="">ทุกสาขา</option>'+branches.map(x=>`<option value="${x}"${x===bcur?' selected':''}>${x}</option>`).join('');
+  var bf=bsel?bsel.value:'';
+  var list=visible.filter(e=>{
+    var ms=!sf||(sf==='active'&&e.status!=='blocked')||(sf==='blocked'&&e.status==='blocked');
+    return(!q||(fn(e)+e.id+e.dept+(e.branch||'')+(e.pos||'')).toLowerCase().includes(q))&&(!d||e.dept===d)&&(!bf||e.branch===bf)&&ms;
+  });
+  document.getElementById('empGrid').innerHTML=list.length?list.map(e=>`
+  <div class="emp-card ${e.status==='blocked'?'blocked':''}" onclick="viewEmp('${e.id}')">
+  ${e.status==='blocked'?'<div style="position:absolute;top:8px;right:8px"><span class="badge badge-red" style="font-size:10px">🚫</span></div>':''}
+  <div class="emp-av" style="${e.status==='blocked'?'background:var(--red-light);color:var(--red)':''}">${ini(e)}</div>
+  <div style="font-weight:600;font-size:13px">${fn(e)}</div>
+  <div style="font-size:11px;color:var(--text2);margin-top:3px">${e.dept}${e.branch?" · "+e.branch:""} · ${e.id}</div>
+  <div style="font-size:11px;color:var(--green);margin-top:6px">📚 ${CRS.filter(c=>c.attendees.includes(e.id)).length} วิชา</div>
+  </div>`).join(''):`<div class="empty">👥<br><br>ไม่พบพนักงาน</div>`;
+}
+
+function viewEmp(id){
+  var e=ge(id);if(!e)return;
+  var my=CRS.filter(c=>c.attendees.includes(id));
+  var isBlocked=e.status==='blocked';
+  document.getElementById('empDetailContent').innerHTML=`
+  ${isBlocked?'<div style="background:var(--red-light);border:1px solid #E24B4A;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--red);font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:6px">🚫 พนักงานคนนี้ถูกระงับการใช้งาน ไม่สามารถ login ได้</div>':''}
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+  <div style="display:flex;align-items:center;gap:18px">
+  <div style="width:60px;height:60px;border-radius:50%;background:${isBlocked?'var(--red-light)':'var(--green-light)'};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:${isBlocked?'var(--red)':'var(--green-text)'}">${ini(e)}</div>
+  <div><div style="font-size:20px;font-weight:700">${fn(e)} ${isBlocked?'<span class="badge badge-red">🚫 ถูกบล็อก</span>':''}</div>
+  <div style="font-size:13px;color:var(--text2);margin-top:4px">${e.id} · ${e.dept}${e.branch?" · "+e.branch:""}${e.pos?" · "+e.pos:""}</div></div></div>
+  ${CU&&CU.role==='admin'?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn sm" onclick="openEditEmp('${e.id}')">✏️ แก้ไขข้อมูล</button>
+  <button class="btn sm ${isBlocked?'primary':'warning'}" onclick="${isBlocked?`unblockEmp('${e.id}')`:`blockEmp('${e.id}')`}">${isBlocked?'✅ ปลดบล็อก':'🚫 บล็อกผู้ใช้'}</button>
+  <button class="btn sm danger" style="border:1px solid #E24B4A" onclick="openDeleteEmp('${e.id}')">🗑️ ลบออกจากระบบ</button>
+  </div>`:''}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+  <div class="stat-card"><div class="stat-label">ผ่านมาแล้ว</div><div class="stat-value">${my.filter(c=>gs(c)==='done').length}</div></div>
+  <div class="stat-card"><div class="stat-label">กำลังจะมา</div><div class="stat-value">${my.filter(c=>gs(c)!=='done').length}</div></div>
+  <div class="stat-card"><div class="stat-label">รวมทั้งหมด</div><div class="stat-value">${my.length}</div></div>
+  </div>
+  <div class="section-title">ประวัติการอบรม</div>
+  <div class="card"><table><thead><tr><th>วิชา</th><th>ประเภท</th><th>วันที่</th><th>สถานะ</th></tr></thead>
+  <tbody>${my.length?my.sort((a,b)=>(b.dateStart||b.date||'').localeCompare(a.dateStart||a.date||'')).map(c=>`<tr style="cursor:pointer" onclick="viewCourse('${c.id}')"><td style="font-weight:600;font-size:13px">${c.name}</td><td>${tb(c.type)}</td><td style="font-size:12px;color:var(--text2)">${c.date}</td><td>${sb(gs(c))}</td></tr>`).join(''):`<tr><td colspan="4" class="empty" style="padding:24px">ยังไม่มีประวัติ</td></tr>`}</tbody>
+  </table></div>`;
+  document.getElementById('pageTitle').innerHTML=fn(e)+' <span class="realtime-dot"></span>';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-emp-detail').classList.add('active');
+}
+
+async function blockEmp(id){
+  if(!confirm('บล็อกพนักงานคนนี้?'))return;
+  await updateDoc(doc(db,'employees',id),{status:'blocked'});
+  showToast('บล็อกเรียบร้อย');viewEmp(id);
+}
+
+async function unblockEmp(id){
+  await updateDoc(doc(db,'employees',id),{status:'active'});
+  showToast('ปลดบล็อกเรียบร้อย');viewEmp(id);
+}
+
+function openDeleteEmp(id){
+  deleteEmpId=id;var e=ge(id);
+  document.getElementById('confirmDeleteText').innerHTML=`คุณต้องการลบ <b>${fn(e)} (${e.id})</b> ออกจากระบบ?`;
+  window.openModal('confirmDeleteModal');
+}
+
+async function confirmDeleteEmp(){
+  if(!deleteEmpId)return;
+  for(const c of CRS){
+    if(c.attendees.includes(deleteEmpId))
+      await updateDoc(doc(db,'courses',c.id),{attendees:arrayRemove(deleteEmpId)});
+  }
+  await deleteDoc(doc(db,'employees',deleteEmpId));
+  window.closeModal('confirmDeleteModal');
+  showToast('ลบพนักงานเรียบร้อย');
+  navTo('employees');deleteEmpId=null;
+}
+
+// ===== CHECKIN =====
+function renderCheckin(){
+  var sel=document.getElementById('checkinCourse');var cur=sel.value;
+  // show all courses - upcoming, active, and done (for retroactive check-in)
+  var upcoming=CRS.filter(c=>{var s=gs(c);return s==='upcoming'||s==='active';}).sort((a,b)=>(a.dateStart||a.date||'').localeCompare(b.dateStart||b.date||''));
+  var done=CRS.filter(c=>gs(c)==='done').sort((a,b)=>(b.dateStart||b.date||'').localeCompare(a.dateStart||a.date||''));
+  var cancelled=CRS.filter(c=>gs(c)==='cancelled').sort((a,b)=>(b.dateStart||b.date||'').localeCompare(a.dateStart||a.date||''));
+  sel.innerHTML='<option value="">— เลือกวิชา —</option>'
+    +(upcoming.length?'<optgroup label="📅 กำลังจะมาถึง / กำลังจัด">'+upcoming.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.name} (${fmtDate(c)})</option>`).join('')+'</optgroup>':'')
+    +(done.length?'<optgroup label="✅ อบรมไปแล้ว (ย้อนหลัง)">'+done.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.name} (${fmtDate(c)})</option>`).join('')+'</optgroup>':'')
+    +(cancelled.length?'<optgroup label="❌ ยกเลิก (ปิดการเช็คชื่อ)" disabled>'+cancelled.map(c=>`<option value="${c.id}" disabled>${c.name} (${fmtDate(c)})</option>`).join('')+'</optgroup>':'');
+  if(cur)showQR();
+}
+
+function showQR(){
+  var id=document.getElementById('checkinCourse').value;
+  document.getElementById('checkinQRSec').style.display=id?'block':'none';
+  document.getElementById('checkinOK').style.display='none';
+  if(!id)return;
+  var c=CRS.find(x=>x.id===id);if(!c)return;
+  var baseUrl=window.location.origin+window.location.pathname.replace(/\/[^\/]*$/, '/')+'/checkin.html';
+  var checkinUrl=baseUrl+'?course='+id;
+  document.getElementById('qrLabel').textContent=c.name+' · '+fmtDate(c);
+  document.getElementById('checkinTitle').textContent='เช็คชื่อ: '+c.name;
+  document.getElementById('checkinUrlDisplay').textContent=checkinUrl;
+  var qr=document.getElementById('qrCanvas');qr.innerHTML='';
+  if(window.QRCode){
+    qr.innerHTML='';
+    new QRCode(qr,{text:checkinUrl,width:140,height:140,colorDark:'#1D9E75',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    qr.innerHTML='<div style="padding:10px;font-size:11px;color:#555;text-align:center">กำลังโหลด QR...</div>';
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload=function(){qr.innerHTML='';new QRCode(qr,{text:checkinUrl,width:140,height:140,colorDark:'#1D9E75',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});};
+    document.head.appendChild(s);
+  }
+  SEL=null;document.getElementById('checkinIn').value='';
+  document.getElementById('checkinPrev').style.display='none';
+  document.getElementById('checkinSug').innerHTML='';
+}
+
+function searchEmpCheckin(){
+  var q=document.getElementById('checkinIn').value.trim().toLowerCase();
+  SEL=null;document.getElementById('checkinPrev').style.display='none';
+  var sg=document.getElementById('checkinSug');
+  if(!q){sg.innerHTML='';return;}
+  var ms=EMP.filter(e=>e.status!=='blocked'&&e.status!=='deleted'&&(e.id.toLowerCase().includes(q)||fn(e).toLowerCase().includes(q))).slice(0,5);
+  sg.innerHTML=ms.length?`<div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px">${ms.map(e=>`<div onclick="selEmp('${e.id}')" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><div class="avatar">${ini(e)}</div><div><b>${fn(e)}</b> <span style="color:var(--text3)">${e.id} · ${e.dept}</span></div></div>`).join('')}</div>`:'';
+}
+
+function selEmp(id){
+  var e=ge(id);if(!e)return;
+  SEL=e.id;
+  document.getElementById('checkinIn').value=fn(e)+' ('+e.id+')';
+  document.getElementById('checkinSug').innerHTML='';
+  document.getElementById('prevAv').textContent=ini(e);
+  document.getElementById('prevName').textContent=fn(e);
+  document.getElementById('prevDept').textContent=e.id+' · '+e.dept+(e.pos?' · '+e.pos:'');
+  document.getElementById('checkinPrev').style.display='block';
+}
+
+function simScan(){
+  var cid=document.getElementById('checkinCourse').value;
+  var c=CRS.find(x=>x.id===cid);if(!c)return;
+  var av=EMP.filter(e=>!c.attendees.includes(e.id)&&e.status!=='blocked'&&e.status!=='deleted');
+  if(!av.length){showToast('พนักงานทุกคนเช็คชื่อแล้ว');return;}
+  selEmp(av[Math.floor(Math.random()*av.length)].id);
+  showToast('จำลอง: สแกน QR สำเร็จ');
+}
+
+function printQR(){
+  var cid=document.getElementById('checkinCourse').value;
+  var c=CRS.find(x=>x.id===cid);if(!c)return;
+  var url=document.getElementById('checkinUrlDisplay').textContent;
+  var qrHtml=document.getElementById('qrCanvas').innerHTML;
+  var win=window.open('','_blank','width=480,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR - ${c.name}</title><style>body{font-family:sans-serif;text-align:center;padding:48px}h2{margin-bottom:8px}p{color:#666;font-size:14px;margin-bottom:4px}.url{font-size:11px;color:#999;word-break:break-all;margin:12px auto;max-width:300px}</style></head><body><h2>${c.name}</h2><p>${fmtDate(c)}${c.location?' · '+c.location:''}</p><div style="display:flex;justify-content:center;margin:20px 0">${qrHtml}</div><p style="font-size:13px;color:#1D9E75;font-weight:600;margin-top:4px">สแกน QR เพื่อเช็คชื่อเข้าอบรม</p><div class="url">${url}</div></body></html>`);
+  win.document.close();setTimeout(()=>win.print(),600);
+}
+
+async function doCheckin(){
+  if(!SEL){showToast('กรุณาเลือกพนักงาน','error');return;}
+  var cid=document.getElementById('checkinCourse').value;
+  if(!cid){showToast('กรุณาเลือกวิชา','error');return;}
+  var c=CRS.find(x=>x.id===cid);if(!c)return;
+  var e=ge(SEL);
+  if(e&&e.status==='blocked'){showToast('พนักงานคนนี้ถูกบล็อก','error');return;}
+  if(c.attendees.includes(SEL)){showToast(fn(ge(SEL))+' เช็คชื่อแล้ว');return;}
+  await updateDoc(doc(db,'courses',cid),{attendees:arrayUnion(SEL)});
+  document.getElementById('okName').textContent=fn(e);
+  document.getElementById('okCourse').textContent='วิชา: '+c.name;
+  document.getElementById('okTime').textContent='เวลา: '+new Date().toLocaleTimeString('th-TH');
+  document.getElementById('checkinQRSec').style.display='none';
+  document.getElementById('checkinOK').style.display='block';
+}
+
+function resetCheckin(){
+  document.getElementById('checkinOK').style.display='none';
+  document.getElementById('checkinQRSec').style.display='block';
+  SEL=null;document.getElementById('checkinIn').value='';
+  document.getElementById('checkinPrev').style.display='none';
+}
+
+// ===== EXPORT =====
+function renderExport(){
+  var sel=document.getElementById('expCourseSelect');
+  sel.innerHTML=CRS.map(c=>`<option value="${c.id}">${c.name} (${fmtDate(c)})</option>`).join('');
+  sel.onchange=updExpPreview;updExpPreview();
+}
+
+function updExpPreview(){
+  var cid=document.getElementById('expCourseSelect').value;
+  var c=CRS.find(x=>x.id===cid);
+  if(c)document.getElementById('expPreview').textContent=`${c.attendees.length} คน · ${c.type} · ${c.date}${c.location?' · '+c.location:''}`;
+}
+
+function dlCSV(fn2,rows){
+  var csv=rows.map(r=>r.map(cell=>{var s=String(cell==null?'':cell);return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn2;a.click();
+  showToast('ดาวน์โหลด '+fn2+' เรียบร้อย');
+}
+
+function expAll(){var rows=[['รหัสพนักงาน','ชื่อ','นามสกุล','แผนก','ตำแหน่ง','รหัสวิชา','ชื่อวิชา','ประเภท','วันที่อบรม','สถานที่','วิทยากร']];CRS.forEach(c=>{c.attendees.forEach(eid=>{var e=ge(eid);if(e)rows.push([e.id,e.first,e.last,e.dept,e.pos||'',c.id,c.name,c.type,(c.dateStart||c.date)+'-'+(c.dateEnd||''),c.timeStart||'',c.timeEnd||'',c.location||'',c.instructor||'']);});});dlCSV('รายงานการเข้าอบรมทั้งหมด.csv',rows);}
+function expEmp(){var rows=[['รหัสพนักงาน','ชื่อ','นามสกุล','แผนก','สาขา','ตำแหน่ง','สถานะ','จำนวนวิชา','วิชาที่ผ่านมา','รายชื่อวิชา']];EMP.filter(e=>e.status!=='deleted').forEach(e=>{var my=CRS.filter(c=>c.attendees.includes(e.id));rows.push([e.id,e.first,e.last,e.dept,e.branch||'',e.pos||'',e.status==='blocked'?'บล็อก':'ปกติ',my.length,my.filter(c=>gs(c)==='done').length,my.map(c=>c.name).join(' | ')]);});dlCSV('รายงานรายบุคคล.csv',rows);}
+function expCourse(){var rows=[['รหัสวิชา','ชื่อวิชา','ประเภท','วันที่','สถานที่','วิทยากร','ที่นั่ง','ผู้เข้าร่วม','อัตรา%','สถานะ']];CRS.forEach(c=>{rows.push([c.id,c.name,c.type,c.date,c.location||'',c.instructor||'',c.max||'ไม่จำกัด',c.attendees.length,c.max?Math.round(c.attendees.length/c.max*100):'-',gs(c)==='done'?'เสร็จสิ้น':gs(c)==='active'?'กำลังจัด':'กำลังจะมาถึง']);});dlCSV('รายงานรายวิชา.csv',rows);}
+function expMissing(){var rows=[['รหัสพนักงาน','ชื่อ','นามสกุล','แผนก','ตำแหน่ง']];EMP.filter(e=>e.status!=='deleted'&&!CRS.some(c=>c.attendees.includes(e.id))).forEach(e=>rows.push([e.id,e.first,e.last,e.dept,e.pos||'']));dlCSV('พนักงานที่ยังไม่ได้อบรม.csv',rows);}
+function expSingle(){var cid=document.getElementById('expCourseSelect').value;var c=CRS.find(x=>x.id===cid);if(!c)return;var rows=[['รหัสพนักงาน','ชื่อ','นามสกุล','แผนก','ตำแหน่ง','วิชา','วันที่','สถานที่']];c.attendees.forEach(eid=>{var e=ge(eid);if(e)rows.push([e.id,e.first,e.last,e.dept,e.pos||'',c.name,c.date,c.location||'']);});dlCSV(c.name+'_รายชื่อผู้เข้าอบรม.csv',rows);}
+
+// ===== ADD COURSE/EMP =====
+async function addCourse(){
+  var name=document.getElementById('nc_name').value.trim();
+  var dateStart=document.getElementById('nc_dateStart').value;
+  if(!name||!dateStart){showToast('กรุณากรอกชื่อวิชาและวันที่เริ่ม','error');return;}
+  var id='C'+Date.now().toString().slice(-6);
+  var dateEnd=document.getElementById('nc_dateEnd').value||dateStart;
+  await setDoc(doc(db,'courses',id),{
+    id,name,
+    type:document.getElementById('nc_type').value,
+    date:dateStart, // backward compat
+    dateStart,dateEnd,
+    timeStart:document.getElementById('nc_timeStart').value||'',
+    timeEnd:document.getElementById('nc_timeEnd').value||'',
+    location:document.getElementById('nc_loc').value,
+    instructor:document.getElementById('nc_ins').value,
+    max:parseInt(document.getElementById('nc_max').value)||0,
+    desc:document.getElementById('nc_desc').value,
+    attendees:[]
+  });
+  window.closeModal('addCourseModal');
+  ['nc_name','nc_dateStart','nc_dateEnd','nc_timeStart','nc_timeEnd','nc_loc','nc_ins','nc_max','nc_desc'].forEach(i=>document.getElementById(i).value='');
+  showToast('เพิ่มวิชาเรียบร้อย ทุกคนเห็นทันที 🎉');
+}
+
+async function addEmp(){
+  var id=document.getElementById('ne_id').value.trim();
+  var first=document.getElementById('ne_first').value.trim();
+  var last=document.getElementById('ne_last').value.trim();
+  var dept=document.getElementById('ne_dept').value.trim();
+  var pass=document.getElementById('ne_pass').value.trim();
+  if(!id||!first||!dept){showToast('กรุณากรอกข้อมูลให้ครบ','error');return;}
+  if(EMP.find(e=>String(e.id)===String(id))){showToast('รหัสพนักงานนี้มีอยู่แล้ว','error');return;}
+  const finalPass=pass||id; // use empId as password if not set
+  await setDoc(doc(db,'employees',String(id)),{id:String(id),first,last,dept,pos:document.getElementById('ne_pos').value,pass:finalPass,status:'active'});
+  window.closeModal('addEmpModal');
+  ['ne_id','ne_first','ne_last','ne_dept','ne_pos','ne_pass'].forEach(i=>document.getElementById(i).value='');
+  showToast('เพิ่มพนักงานเรียบร้อย ทุกคนเห็นทันที 🎉');
+}
+
+// ===== IMPORT (Excel/CSV) =====
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  if(ext==='csv'){
+    reader.onload=e=>parseCSV(e.target.result);
+    reader.readAsText(file,'UTF-8');
+  } else {
+    reader.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      parseRows(data);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCSV(text){
+  const lines=text.split('\n').filter(l=>l.trim());
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  const rows=lines.slice(1).map(line=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/"/g,''));
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=vals[i]||'');
+    return obj;
+  });
+  parseRows(rows);
+}
+
+function normalizeKey(row,keys){
+  for(const k of keys){
+    for(const rk of Object.keys(row)){
+      if(rk.trim().toLowerCase()===k.toLowerCase()) return row[rk];
+    }
+  }
+  return '';
+}
+
+function parseRows(rows){
+  importBuffer=rows.map(r=>({
+    id: String(normalizeKey(r,['รหัสพนักงาน','EmpID','emp_id','ID','รหัส'])||'').trim(),
+    first: String(normalizeKey(r,['ชื่อ','FirstName','first_name','ชื่อจริง','Name'])||'').trim(),
+    last: String(normalizeKey(r,['นามสกุล','LastName','last_name','Surname'])||'').trim(),
+    dept: String(normalizeKey(r,['แผนก','Department','dept','Division'])||'').trim(),
+    pos: String(normalizeKey(r,['ตำแหน่ง','Position','pos','Role'])||'').trim(),
+    branch: String(normalizeKey(r,['สาขา','Branch','branch','Site'])||'').trim(),
+    _rawPass: String(normalizeKey(r,['รหัสผ่าน','Password','pass'])||'').trim(),
+  })).filter(r=>r.id&&r.first).map(r=>({...r, pass: r._rawPass||r.id}));
+
+  var dups=importBuffer.filter(r=>EMP.find(e=>e.id===r.id));
+  document.getElementById('importCount').textContent=importBuffer.length;
+  document.getElementById('importWarnBadge').innerHTML=dups.length?`<span class="badge badge-amber">⚠️ มีรหัสซ้ำ ${dups.length} คน (จะข้าม)</span>`:'';
+  document.getElementById('importTbl').innerHTML=importBuffer.map(r=>{
+    var isDup=EMP.find(e=>e.id===r.id);
+    return`<tr style="${isDup?'opacity:0.5':''}"><td style="font-size:12px">${r.id}</td><td>${r.first} ${r.last}</td><td><span class="badge badge-blue">${r.dept}</span></td><td style="font-size:12px;color:var(--text2)">${r.branch||'-'}</td><td style="font-size:12px;color:var(--text2)">${r.pos}</td><td>${isDup?'<span class="badge badge-amber">ซ้ำ</span>':'<span class="badge badge-green">ใหม่</span>'}</td></tr>`;
+  }).join('');
+  document.getElementById('importPrev').style.display='block';
+}
+
+function loadSample(){
+  parseRows([
+    {รหัสพนักงาน:'EMP011',ชื่อ:'อนันต์',นามสกุล:'สมหวัง',แผนก:'Marketing',ตำแหน่ง:'เจ้าหน้าที่การตลาด'},
+    {รหัสพนักงาน:'EMP012',ชื่อ:'นภา',นามสกุล:'เจริญสุข',แผนก:'Marketing',ตำแหน่ง:'ผู้จัดการ'},
+    {รหัสพนักงาน:'EMP013',ชื่อ:'ชัยยา',นามสกุล:'บุญรอด',แผนก:'QA',ตำแหน่ง:'เจ้าหน้าที่ QA'},
+    {รหัสพนักงาน:'EMP014',ชื่อ:'ศิริพร',นามสกุล:'มีสุข',แผนก:'QA',ตำแหน่ง:'หัวหน้า QA'},
+  ]);
+}
+
+function downloadTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['รหัสพนักงาน','ชื่อ','นามสกุล','แผนก','สาขา','ตำแหน่ง'],
+    ['10001','สมชาย','ใจดี','HR','ระยอง','เจ้าหน้าที่ HR'],
+    ['10002','วิภา','รักเรียน','Sales','กรุงเทพ','พนักงานขาย'],
+  ]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'พนักงาน');
+  XLSX.writeFile(wb,'template_พนักงาน.xlsx');
+  showToast('ดาวน์โหลด Template เรียบร้อย');
+}
+
+async function confirmImport(){
+  var added=0;
+  for(const e of importBuffer){
+    if(!EMP.find(x=>String(x.id)===String(e.id))){
+      // use empId as default password
+      const empWithPass={...e, id:String(e.id), pass:String(e.pass||e.id), status:'active'};
+      await setDoc(doc(db,'employees',String(e.id)),empWithPass);
+      added++;
+    }
+  }
+  document.getElementById('importPrev').style.display='none';
+  importBuffer=[];
+  document.getElementById('fileInput').value='';
+  showToast(`นำเข้า ${added} คนเรียบร้อย ทุกคนเห็นทันที 🎉`);
+}
+
+function cancelImport(){
+  document.getElementById('importPrev').style.display='none';
+  importBuffer=[];
+  document.getElementById('fileInput').value='';
+}
+
+// ===== MODAL CLOSE ON BACKDROP =====
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.style.display='none';}));
+
+// ===== EDIT COURSE =====
+let editCourseId = null;
+
+function openEditCourse(id){
+  const c = CRS.find(x=>x.id===id);
+  if(!c) return;
+  editCourseId = id;
+  document.getElementById('ec_name').value = c.name||'';
+  document.getElementById('ec_type').value = c.type||'คอร์สเรียน';
+  document.getElementById('ec_dateStart').value = c.dateStart||c.date||'';
+  document.getElementById('ec_dateEnd').value = c.dateEnd||c.dateStart||c.date||'';
+  document.getElementById('ec_timeStart').value = c.timeStart||'';
+  document.getElementById('ec_timeEnd').value = c.timeEnd||'';
+  document.getElementById('ec_loc').value = c.location||'';
+  document.getElementById('ec_ins').value = c.instructor||'';
+  document.getElementById('ec_max').value = c.max||'';
+  document.getElementById('ec_desc').value = c.desc||'';
+  window.openModal('editCourseModal');
+}
+
+async function saveEditCourse(){
+  if(!editCourseId) return;
+  const name = document.getElementById('ec_name').value.trim();
+  const dateStart = document.getElementById('ec_dateStart').value;
+  if(!name||!dateStart){showToast('กรุณากรอกชื่อวิชาและวันที่เริ่ม','error');return;}
+  const dateEnd = document.getElementById('ec_dateEnd').value||dateStart;
+  const updates = {
+    name,
+    type: document.getElementById('ec_type').value,
+    date: dateStart,
+    dateStart, dateEnd,
+    timeStart: document.getElementById('ec_timeStart').value||'',
+    timeEnd: document.getElementById('ec_timeEnd').value||'',
+    location: document.getElementById('ec_loc').value,
+    instructor: document.getElementById('ec_ins').value,
+    max: parseInt(document.getElementById('ec_max').value)||0,
+    desc: document.getElementById('ec_desc').value,
+  };
+  await updateDoc(doc(db,'courses',editCourseId), updates);
+  window.closeModal('editCourseModal');
+  showToast('แก้ไขวิชาเรียบร้อย 🎉');
+  // refresh current page
+  const ap=document.querySelector('.page.active');
+  if(ap){
+    const pid=ap.id.replace('page-','');
+    if(pid==='course-detail') viewCourse(editCourseId);
+    else if(pid==='courses') renderCourses();
+    else renderDash();
+  }
+  editCourseId = null;
+}
+
+window.openEditCourse = openEditCourse;
+window.saveEditCourse = saveEditCourse;
+
+// ===== EDIT EMPLOYEE =====
+let editEmpId = null;
+
+function openEditEmp(id){
+  const e = ge(id);
+  if(!e) return;
+  editEmpId = id;
+  document.getElementById('edit_id').value = e.id;
+  document.getElementById('edit_first').value = e.first||'';
+  document.getElementById('edit_last').value = e.last||'';
+  document.getElementById('edit_dept').value = e.dept||'';
+  document.getElementById('edit_pos').value = e.pos||'';
+  document.getElementById('edit_branch').value = e.branch||'';
+  document.getElementById('edit_pass').value = '';
+  window.openModal('editEmpModal');
+}
+
+async function saveEditEmp(){
+  if(!editEmpId) return;
+  const first = document.getElementById('edit_first').value.trim();
+  const last = document.getElementById('edit_last').value.trim();
+  const dept = document.getElementById('edit_dept').value.trim();
+  if(!first||!dept){showToast('กรุณากรอกข้อมูลให้ครบ','error');return;}
+  const updates = {
+    first, last, dept,
+    pos: document.getElementById('edit_pos').value.trim(),
+    branch: document.getElementById('edit_branch').value.trim(),
+  };
+  const newPass = document.getElementById('edit_pass').value.trim();
+  if(newPass) updates.pass = newPass;
+  await updateDoc(doc(db,'employees', editEmpId), updates);
+  window.closeModal('editEmpModal');
+  showToast('แก้ไขข้อมูลเรียบร้อย 🎉');
+  viewEmp(editEmpId);
+}
+
+window.openEditEmp = openEditEmp;
+window.saveEditEmp = saveEditEmp;
+
+// ===== MY PROFILE =====
+function renderMyProfile(){
+  if(!CU||CU.role!=='user')return;
+  const e=CU.emp;
+  const my=CRS.filter(c=>c.attendees&&c.attendees.includes(String(e.id)));
+  document.getElementById('myprofileContent').innerHTML=`
+  <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;padding:20px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg)">
+  <div style="width:60px;height:60px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--green-text)">${ini(e)}</div>
+  <div><div style="font-size:20px;font-weight:700">${fn(e)}</div>
+  <div style="font-size:13px;color:var(--text2);margin-top:4px">${e.id} · ${e.dept||''}${e.pos?' · '+e.pos:''}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+  <div class="stat-card"><div class="stat-label">ผ่านมาแล้ว</div><div class="stat-value">${my.filter(c=>gs(c)==='done').length}</div></div>
+  <div class="stat-card"><div class="stat-label">กำลังจะมา</div><div class="stat-value">${my.filter(c=>gs(c)!=='done').length}</div></div>
+  <div class="stat-card"><div class="stat-label">รวมทั้งหมด</div><div class="stat-value">${my.length}</div></div>
+  </div>
+  <div class="section-title">ประวัติการอบรมของฉัน</div>
+  <div class="card"><table><thead><tr><th>วิชา</th><th>ประเภท</th><th>วันที่</th><th>สถานะ</th></tr></thead>
+  <tbody>${my.length?my.sort((a,b)=>(b.dateStart||b.date||'').localeCompare(a.dateStart||a.date||'')).map(c=>`<tr><td style="font-weight:600;font-size:13px">${c.name}</td><td>${tb(c.type)}</td><td style="font-size:12px;color:var(--text2)">${fmtDate(c)}</td><td>${sb(gs(c))}</td></tr>`).join(''):'<tr><td colspan="4" class="empty" style="padding:24px">ยังไม่มีประวัติอบรม</td></tr>'}</tbody>
+  </table></div>`;
+}
+
+// ===== INIT =====
+async function init(){
+  try{
+    await initDefaultData();
+    startListeners();
+    document.getElementById('loadingOverlay').style.display='none';
+    document.getElementById('loginWrap').style.display='flex';
+  } catch(err){
+    console.error(err);
+    document.getElementById('loadingOverlay').innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:12px">❌</div><div style="font-size:14px;color:#A32D2D;font-weight:600">เชื่อมต่อ Firebase ไม่ได้</div><div style="font-size:12px;color:#555;margin-top:8px">'+err.message+'</div></div>';
+  }
+}
+init();
+</script>
+</body>
+</html>
