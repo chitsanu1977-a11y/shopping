@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ซื้อของเข้าบ้าน</title>
+<meta name="description" content="รายการซื้อของใช้ในบ้าน ติ๊กของที่ซื้อแล้ว สรุปยอดเงินและประวัติการซื้อ">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ซื้อของเข้าบ้าน">
+<meta property="og:description" content="รายการซื้อของใช้ในบ้าน ติ๊กของที่ซื้อแล้ว สรุปยอดเงินและประวัติการซื้อ">
+<meta property="og:url" content="https://chitsanu1977-a11y.github.io/shopping/">
 <meta name="theme-color" content="#2D7A4C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -149,7 +154,7 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .hidden{display:none!important}
-.sync-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 10px;font-size:.78rem;color:var(--muted)}
+.sync-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 12px;min-height:36px;font-size:.8rem;color:var(--muted);touch-action:manipulation;position:relative;z-index:1}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
 .dot.ok{background:var(--leaf)} .dot.busy{background:var(--mango)} .dot.err{background:var(--danger)}
 .setup{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:520px;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:calc(100% - env(safe-area-inset-top,0px) - 24px);overflow-y:auto}
@@ -160,6 +165,10 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 .setup .msg{min-height:1.5em;font-size:.88rem;margin:10px 0 0}
 .setup .msg.err{color:var(--danger)}
 .setup .r-actions{margin-top:14px}
+.sync-tools{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.sync-tools p{margin:0 0 10px}
+.sync-tools .row{display:flex;gap:8px;flex-wrap:wrap}
+.sync-tools .btn{padding:9px 14px;font-size:.9rem}
 .setup .unlink{background:none;border:0;color:var(--danger);padding:10px 0 0;font-size:.88rem}
 .sortbar{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:.85rem;color:var(--muted)}
 .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
@@ -233,6 +242,7 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
         <button class="btn ghost" id="import-btn" type="button">นำเข้าไฟล์สำรอง</button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
+      <p style="margin-top:16px;font-size:.8rem">เวอร์ชัน 2026-10-27c</p>
     </div>
   </section>
 </div>
@@ -263,6 +273,7 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 <div class="scrim" id="setup-scrim" aria-hidden="true">
   <form class="setup" id="setup-form" role="dialog" aria-modal="true" aria-labelledby="setup-title" autocomplete="off">
     <h2 id="setup-title">เชื่อมต่อ Google Sheet</h2>
+    <p style="font-size:.78rem;margin:0 0 6px">เวอร์ชัน 2026-10-27c</p>
     <p>ใช้ลิงก์ Web app จาก Apps Script ทุกเครื่องที่ใส่ลิงก์เดียวกันจะเห็นรายการชุดเดียวกัน</p>
     <label for="setup-url">ลิงก์ Web app</label>
     <input id="setup-url" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" required>
@@ -272,6 +283,13 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
     <div class="r-actions">
       <button class="btn ghost" type="button" id="setup-cancel">ปิด</button>
       <button class="btn" type="submit" id="setup-go">เชื่อมต่อ</button>
+    </div>
+    <div class="sync-tools hidden" id="sync-tools">
+      <p id="sync-info"></p>
+      <div class="row">
+        <button class="btn ghost" type="button" id="sync-now">ซิงก์ตอนนี้</button>
+        <button class="btn ghost" type="button" id="sync-replace">ใช้ข้อมูลจากชีตทับเครื่องนี้</button>
+      </div>
     </div>
     <button class="unlink hidden" type="button" id="setup-unlink">เลิกเชื่อมต่อ ใช้เฉพาะเครื่องนี้</button>
   </form>
@@ -338,7 +356,8 @@ function computeOps(){
   for(const id in base.trips) if(!(id in now.trips)) ops.push({op:'deleteTrip', id});
   return {ops, snap: now};
 }
-let flushTimer = null, inflight = false, again = false;
+let flushTimer = null, inflight = false, again = false, lastSync = 0, lastErr = null;
+const hhmm = t => new Date(t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
 function scheduleFlush(delay = 800){
   if(!cfg) return;
   setStatus('busy');
@@ -400,7 +419,8 @@ function setStatus(kind, e){
     dot.classList.add('err');
     t.textContent = e && e.code==='pin' ? 'PIN ไม่ถูกต้อง' : (navigator.onLine ? 'ซิงก์ไม่สำเร็จ ลองใหม่อัตโนมัติ' : 'ออฟไลน์ จะบันทึกเมื่อต่อเน็ต');
   }
-  else { dot.classList.add('ok'); t.textContent = 'ซิงก์กับชีตแล้ว'; }
+  else { dot.classList.add('ok'); lastSync = Date.now(); lastErr = null; t.textContent = 'ซิงก์แล้ว ' + hhmm(lastSync); }
+  if(kind==='err') lastErr = e || {};
 }
 
 // ---------- helpers ----------
@@ -522,7 +542,7 @@ function renderHistory(){
   if(!trips.length){ el.innerHTML = `<div class="empty"><b>ยังไม่มีประวัติการซื้อ</b>เมื่อยืนยันซื้อแล้ว สรุปยอดแต่ละวันจะแสดงที่นี่</div>`; return; }
   const sorted = [...trips].sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0));
   const groups = {};
-  for(const t of sorted){ (groups[t.date.slice(0,7)] ||= []).push(t); }
+  for(const t of sorted){ const k = t.date.slice(0,7); (groups[k] = groups[k] || []).push(t); }
   el.innerHTML = Object.entries(groups).map(([ym, ts]) => {
     const sum = ts.reduce((s,t)=>s+num(t.total),0);
     return `<div class="month"><span>${thMonth(ym)}</span><span>รวม <strong class="num">฿${money(sum)}</strong></span></div>` +
@@ -546,6 +566,8 @@ document.querySelectorAll('nav button').forEach(b => b.addEventListener('click',
   ['list','regular','history'].forEach(k => document.getElementById('tab-'+k).classList.toggle('hidden', k!==tab));
   renderBar(); window.scrollTo(0,0);
 }));
+
+document.getElementById('sync-btn').addEventListener('click', () => openSetup());
 
 // ---------- events: list ----------
 document.getElementById('add-form').addEventListener('submit', e => {
@@ -669,26 +691,54 @@ if(!loadLocal()){
 }
 render();
 setStatus();
-if(cfg){ computeOps().ops.length ? scheduleFlush(0) : pull(); }
+try{ if(cfg){ computeOps().ops.length ? scheduleFlush(0) : pull(); } }catch(e){ console.error(e); }
 setInterval(() => { if(document.visibilityState==='visible') pull(); }, 20000);
-document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') pull(); });
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState!=='visible' || !cfg) return;
+  computeOps().ops.length ? scheduleFlush(0) : pull();
+});
+window.addEventListener('pageshow', e => { if(e.persisted && cfg) pull(); });
 window.addEventListener('online', () => scheduleFlush(0));
 
 // ---------- setup ----------
 const setupScrim = document.getElementById('setup-scrim');
 const setupMsg = document.getElementById('setup-msg');
 function openSetup(){
+  const setupMsg = document.getElementById('setup-msg'), setupScrim = document.getElementById('setup-scrim');
   document.getElementById('setup-url').value = cfg?.url || '';
   document.getElementById('setup-pin').value = cfg?.pin || '';
   document.getElementById('setup-unlink').classList.toggle('hidden', !cfg);
+  document.getElementById('sync-tools').classList.toggle('hidden', !cfg);
+  if(cfg){
+    const pending = computeOps().ops.length;
+    document.getElementById('sync-info').textContent =
+      (lastSync ? 'ซิงก์ล่าสุด ' + hhmm(lastSync) : 'ยังไม่ได้ซิงก์ในรอบนี้') +
+      (pending ? ` | รอส่งขึ้นชีต ${pending} การแก้ไข` : ' | ไม่มีการแก้ไขค้างส่ง') +
+      (lastErr ? ' | ครั้งล่าสุดส่งไม่สำเร็จ' : '');
+  }
   document.getElementById('setup-go').textContent = cfg ? 'บันทึกการเชื่อมต่อ' : 'เชื่อมต่อ';
   setupMsg.textContent=''; setupMsg.className='msg';
   setupScrim.classList.add('open'); setupScrim.setAttribute('aria-hidden','false');
 }
 function closeSetup(){ setupScrim.classList.remove('open'); setupScrim.setAttribute('aria-hidden','true'); }
-document.getElementById('sync-btn').addEventListener('click', openSetup);
 document.getElementById('setup-cancel').addEventListener('click', closeSetup);
 setupScrim.addEventListener('click', e => { if(e.target===setupScrim) closeSetup(); });
+document.getElementById('sync-now').addEventListener('click', async () => {
+  setupMsg.className='msg'; setupMsg.textContent='กำลังซิงก์…';
+  await flush(); await pull();
+  if(lastErr){ setupMsg.className='msg err'; setupMsg.textContent = lastErr.code==='pin' ? 'PIN ไม่ตรงกับที่ตั้งใน Apps Script' : 'ซิงก์ไม่สำเร็จ ตรวจเน็ตหรือลิงก์'; }
+  else { closeSetup(); toast('ซิงก์แล้ว ' + hhmm(Date.now())); }
+});
+document.getElementById('sync-replace').addEventListener('click', async () => {
+  const pending = computeOps().ops.length;
+  if(!confirm('โหลดข้อมูลทั้งหมดจากชีตมาแทนข้อมูลในเครื่องนี้?' + (pending ? `\nการแก้ไขที่ยังไม่ได้ส่ง ${pending} รายการจะหายไป` : ''))) return;
+  setupMsg.className='msg'; setupMsg.textContent='กำลังโหลด…';
+  try{
+    const d = await getAll(cfg);
+    synced = snapshotOf(d); state.catalog = d.catalog; state.list = d.list; trips = d.trips;
+    saveLocal(); render(); setStatus('ok'); closeSetup(); toast('โหลดข้อมูลจากชีตแล้ว');
+  }catch(e){ setStatus('err', e); setupMsg.className='msg err'; setupMsg.textContent = e.code==='pin' ? 'PIN ไม่ตรงกับที่ตั้งใน Apps Script' : 'โหลดไม่ได้ ตรวจเน็ตหรือลิงก์'; }
+});
 document.getElementById('setup-unlink').addEventListener('click', () => {
   if(!confirm('เลิกเชื่อมต่อชีต? ข้อมูลในเครื่องนี้ยังอยู่ และข้อมูลในชีตไม่ถูกลบ')) return;
   cfg = null; synced = null; localStorage.removeItem(CFG_KEY); saveLocal(); setStatus(); closeSetup(); toast('เลิกเชื่อมต่อแล้ว');
