@@ -154,6 +154,23 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .hidden{display:none!important}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0 0}
+.modes button{border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;text-align:left;font-weight:600;line-height:1.3}
+.modes button b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--ink);font-size:.8rem;margin-right:6px}
+.modes button small{display:block;font-weight:400;font-size:.8rem;color:var(--muted);margin-top:2px}
+.modes button[aria-pressed="true"]{border-color:var(--leaf);background:var(--leaf-soft)}
+.modes button[aria-pressed="true"] b{background:var(--leaf);color:var(--leaf-ink)}
+.prow{display:grid;grid-template-columns:44px 1fr auto;gap:2px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.pbox{width:28px;height:28px;border-radius:8px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;justify-self:center;color:var(--leaf-ink)}
+.pbox svg{width:16px;height:16px;opacity:0}
+.prow.on .pbox{background:var(--leaf);border-color:var(--leaf)}
+.prow.on .pbox svg{opacity:1}
+.prow .pname{background:none;border:0;padding:4px 0;text-align:left;font-weight:500}
+.prow .pname small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.prow:not(.on) .pname{color:var(--muted)}
+.prow.on .pname{color:var(--ink)}
+.prow .stepper{grid-column:3}
+.plan-head{font-size:.82rem;color:var(--muted);margin:14px 0 0}
 .sync-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 12px;min-height:36px;font-size:.8rem;color:var(--muted);touch-action:manipulation;position:relative;z-index:1}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
 .dot.ok{background:var(--leaf)} .dot.busy{background:var(--mango)} .dot.err{background:var(--danger)}
@@ -200,18 +217,22 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 
   <!-- list -->
   <section id="tab-list">
+    <div class="modes" role="group" aria-label="โหมด">
+      <button data-mode="plan"><b>1</b> แพลนที่จะซื้อ<small id="mode-plan-sub"></small></button>
+      <button data-mode="shop"><b>2</b> ซื้อที่ร้าน<small id="mode-shop-sub"></small></button>
+    </div>
     <form class="add" id="add-form" autocomplete="off">
-      <input id="add-input" list="cat-names" placeholder="เพิ่มของที่จะซื้อ เช่น ไข่ไก่" aria-label="ชื่อสินค้า">
+      <input id="add-input" list="cat-names" placeholder="เพิ่มของที่จะซื้อ" aria-label="ชื่อสินค้า">
       <datalist id="cat-names"></datalist>
       <button class="btn" type="submit">เพิ่ม</button>
     </form>
-    <div class="chips" id="chips" aria-label="ของประจำที่ยังไม่อยู่ในรายการ"></div>
     <div class="sortbar" id="sortbar-list">เรียง
       <div class="seg" role="group" aria-label="เรียงรายการซื้อ">
         <button data-sort="todo">ที่ต้องซื้อก่อน</button><button data-sort="alpha">ก–ฮ</button><button data-sort="added">เพิ่มล่าสุด</button>
       </div>
     </div>
     <ul class="list" id="list"></ul>
+    <ul class="list hidden" id="plan"></ul>
   </section>
 
   <!-- regular -->
@@ -242,7 +263,7 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
         <button class="btn ghost" id="import-btn" type="button">นำเข้าไฟล์สำรอง</button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
-      <p style="margin-top:16px;font-size:.8rem">เวอร์ชัน 2026-10-27c</p>
+      <p style="margin-top:16px;font-size:.8rem">เวอร์ชัน 2026-10-27d</p>
     </div>
   </section>
 </div>
@@ -273,7 +294,7 @@ nav .count{display:inline-block;min-width:1.4em;padding:0 .4em;margin-left:4px;b
 <div class="scrim" id="setup-scrim" aria-hidden="true">
   <form class="setup" id="setup-form" role="dialog" aria-modal="true" aria-labelledby="setup-title" autocomplete="off">
     <h2 id="setup-title">เชื่อมต่อ Google Sheet</h2>
-    <p style="font-size:.78rem;margin:0 0 6px">เวอร์ชัน 2026-10-27c</p>
+    <p style="font-size:.78rem;margin:0 0 6px">เวอร์ชัน 2026-10-27d</p>
     <p>ใช้ลิงก์ Web app จาก Apps Script ทุกเครื่องที่ใส่ลิงก์เดียวกันจะเห็นรายการชุดเดียวกัน</p>
     <label for="setup-url">ลิงก์ Web app</label>
     <input id="setup-url" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" required>
@@ -428,7 +449,7 @@ const catByName = name => state.catalog.find(c => c.name.trim() === name.trim())
 const inList = name => state.list.some(i => i.name.trim() === name.trim());
 function addToList(name){
   name = name.trim(); if(!name) return;
-  if(inList(name)){ toast('“'+name+'” อยู่ในรายการแล้ว'); return; }
+  if(inList(name)){ toast('“'+name+'” อยู่ในแพลนแล้ว'); return; }
   const c = catByName(name);
   state.list.push({ id: uid(), name, unit: c?.unit || '', qty: 1, price: c?.lastPrice ?? '', checked: false });
   save(); render();
@@ -470,7 +491,7 @@ function sortCatalog(){
 function renderSortBars(){
   document.querySelectorAll('#sortbar-list [data-sort]').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === (state.sortList||'todo')));
   document.querySelectorAll('#sortbar-cat [data-sort]').forEach(b => b.setAttribute('aria-pressed', b.dataset.sort === (state.sortCat||'alpha')));
-  document.getElementById('sortbar-list').classList.toggle('hidden', state.list.length < 2);
+  document.getElementById('sortbar-list').classList.toggle('hidden', (mode()==='plan' ? state.catalog.length + state.list.length : state.list.length) < 2);
 }
 document.getElementById('sortbar-list').addEventListener('click', e => {
   const b = e.target.closest('[data-sort]'); if(!b) return;
@@ -482,17 +503,48 @@ document.getElementById('sortbar-cat').addEventListener('click', e => {
 });
 
 // ---------- render ----------
+function mode(){ if(!state.mode) state.mode = state.list.length ? 'shop' : 'plan'; return state.mode; }
 function render(){
   document.getElementById('cnt-list').textContent = state.list.filter(i=>!i.checked).length;
-  renderSortBars(); renderList(); renderCatalog(); renderHistory(); renderBar();
+  const m = mode();
+  document.querySelectorAll('.modes [data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode===m));
+  document.getElementById('mode-plan-sub').textContent = state.list.length ? `แพลนไว้ ${state.list.length} รายการ` : 'ติ๊กของที่ต้องซื้อ';
+  const bought = state.list.filter(i=>i.checked).length;
+  document.getElementById('mode-shop-sub').textContent = state.list.length ? `ซื้อแล้ว ${bought}/${state.list.length}` : 'ยังไม่มีแพลน';
+  document.getElementById('list').classList.toggle('hidden', m!=='shop');
+  document.getElementById('plan').classList.toggle('hidden', m!=='plan');
+  document.getElementById('add-input').placeholder = m==='plan' ? 'เพิ่มของที่ไม่มีในรายการ' : 'ซื้อของนอกแพลน พิมพ์ชื่อที่นี่';
+  const todoBtn = document.querySelector('#sortbar-list [data-sort="todo"]');
+  todoBtn.textContent = m==='plan' ? 'ที่แพลนก่อน' : 'ยังไม่ซื้อก่อน';
+  renderSortBars(); renderList(); renderPlan(); renderCatalog(); renderHistory(); renderBar();
   document.getElementById('cat-names').innerHTML = state.catalog.map(c=>`<option value="${esc(c.name)}">`).join('');
 }
+function planRows(){
+  const rows = state.catalog.map((c, idx) => ({ name:c.name, unit:c.unit||'', lastPrice:c.lastPrice, item: state.list.find(i=>i.name.trim()===c.name.trim()) || null, idx }));
+  state.list.forEach((i, k) => { if(!catByName(i.name)) rows.push({ name:i.name, unit:i.unit||'', lastPrice:null, item:i, idx: state.catalog.length + k }); });
+  const m = state.sortList || 'todo';
+  if(m==='alpha') rows.sort((a,b)=> collator.compare(a.name,b.name));
+  else if(m==='added') rows.sort((a,b)=> b.idx - a.idx);
+  else rows.sort((a,b)=> (!!b.item - !!a.item) || collator.compare(a.name,b.name));
+  return rows;
+}
+function renderPlan(){
+  const ul = document.getElementById('plan');
+  const rows = planRows();
+  if(!rows.length){ ul.innerHTML = `<li class="empty"><b>ยังไม่มีรายการ</b>พิมพ์ชื่อของด้านบน หรือเพิ่มของประจำในแท็บของประจำ</li>`; return; }
+  ul.innerHTML = rows.map(r => {
+    const on = !!r.item;
+    return `<li class="prow${on?' on':''}" data-name="${esc(r.name)}">
+      <button class="pbox" data-pact="toggle" aria-pressed="${on}" aria-label="${on?'ยกเลิกแพลน':'แพลนซื้อ'}: ${esc(r.name)}">${CHECK_SVG}</button>
+      <button class="pname" data-pact="toggle">${esc(r.name)}<small>${r.unit?esc(r.unit):''}${r.lastPrice?`${r.unit?' | ':''}ล่าสุด ฿${money(r.lastPrice)}`:''}${on && r.item.checked?' | ซื้อแล้ว':''}</small></button>
+      ${on ? `<span class="stepper"><button data-pact="dec" aria-label="ลดจำนวน">−</button><input class="num" data-pf="qty" inputmode="decimal" value="${esc(r.item.qty)}" aria-label="จำนวนที่จะซื้อ"><button data-pact="inc" aria-label="เพิ่มจำนวน">+</button></span>` : '<span></span>'}
+    </li>`;
+  }).join('');
+}
 function renderList(){
-  const chips = state.catalog.filter(c => !inList(c.name));
-  document.getElementById('chips').innerHTML = chips.map(c=>`<button class="chip" data-chip="${esc(c.name)}">+ ${esc(c.name)}</button>`).join('');
   const ul = document.getElementById('list');
   if(!state.list.length){
-    ul.innerHTML = `<li class="empty"><b>ยังไม่มีของที่จะซื้อ</b>พิมพ์ชื่อด้านบน หรือแตะของประจำเพื่อเพิ่ม</li>`;
+    ul.innerHTML = `<li class="empty"><b>ยังไม่มีของที่แพลนไว้</b>ไปที่ “แพลนที่จะซื้อ” แล้วติ๊กของที่ต้องซื้อ</li>`;
     return;
   }
   const sorted = sortList();
@@ -515,14 +567,21 @@ function renderList(){
 }
 function renderBar(){
   const t = listTotals();
+  document.getElementById('bar').classList.toggle('hidden', tab!=='list');
+  const b = document.getElementById('confirm-btn');
+  if(mode()==='plan'){
+    document.getElementById('bar-sub').textContent = state.list.length ? `แพลนไว้ ${state.list.length} รายการ ประมาณการ` : 'ติ๊กของที่จะซื้อ';
+    document.getElementById('bar-total').textContent = '฿' + money(t.all);
+    b.disabled = !state.list.length; b.textContent = 'ไปซื้อ →'; b.dataset.go = 'shop';
+    return;
+  }
+  delete b.dataset.go;
   document.getElementById('bar-total').textContent = '฿' + money(t.checked);
   document.getElementById('bar-sub').textContent = t.n
     ? `ในตะกร้า ${t.n} จาก ${state.list.length} รายการ`
     : (state.list.length ? `ประมาณการทั้งหมด ฿${money(t.all)}` : 'ติ๊กรายการที่หยิบใส่ตะกร้าแล้ว');
-  const b = document.getElementById('confirm-btn');
   b.disabled = !t.n;
   b.textContent = t.n ? `ยืนยันซื้อแล้ว (${t.n})` : 'ยืนยันซื้อแล้ว';
-  document.getElementById('bar').classList.toggle('hidden', tab!=='list');
 }
 function renderCatalog(){
   const el = document.getElementById('catalog');
@@ -574,9 +633,35 @@ document.getElementById('add-form').addEventListener('submit', e => {
   e.preventDefault(); const inp = document.getElementById('add-input');
   addToList(inp.value); inp.value=''; inp.focus();
 });
-document.getElementById('chips').addEventListener('click', e => {
-  const c = e.target.closest('[data-chip]'); if(c) addToList(c.dataset.chip);
+function setMode(m){ state.mode = m; saveLocal(); render(); }
+document.querySelector('.modes').addEventListener('click', e => {
+  const b = e.target.closest('[data-mode]'); if(b) setMode(b.dataset.mode);
 });
+const planEl = document.getElementById('plan');
+planEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-pact]'); if(!b) return;
+  const name = b.closest('.prow').dataset.name;
+  const it = state.list.find(i=>i.name.trim()===name.trim());
+  const a = b.dataset.pact;
+  if(a==='toggle'){
+    if(it){
+      if(it.checked && !confirm(`“${name}” ติ๊กว่าซื้อแล้ว ต้องการเอาออกจากแพลน?`)) return;
+      state.list = state.list.filter(x=>x!==it);
+    } else {
+      const c = catByName(name);
+      state.list.push({ id: uid(), name, unit: c?.unit || '', qty: 1, price: c?.lastPrice ?? '', checked: false });
+    }
+  }
+  if(it && a==='inc') it.qty = num(it.qty)+1;
+  if(it && a==='dec') it.qty = Math.max(1, num(it.qty)-1);
+  save(); render();
+});
+planEl.addEventListener('input', e => {
+  if(e.target.dataset.pf!=='qty') return;
+  const it = state.list.find(i=>i.name.trim()===e.target.closest('.prow').dataset.name.trim()); if(!it) return;
+  it.qty = e.target.value; renderBar(); save();
+});
+planEl.addEventListener('focusin', e => { if(e.target.matches('input')) e.target.select(); });
 const listEl = document.getElementById('list');
 listEl.addEventListener('click', e => {
   const btn = e.target.closest('[data-act]'); if(!btn) return;
@@ -663,7 +748,10 @@ document.getElementById('r-lines').addEventListener('input', e => {
   updateSum();
 });
 document.getElementById('r-lines').addEventListener('focusin', e => { if(e.target.matches('input')) e.target.select(); });
-document.getElementById('confirm-btn').addEventListener('click', openReceipt);
+document.getElementById('confirm-btn').addEventListener('click', e => {
+  if(e.currentTarget.dataset.go === 'shop'){ setMode('shop'); window.scrollTo(0,0); return; }
+  openReceipt();
+});
 document.getElementById('r-cancel').addEventListener('click', closeReceipt);
 scrim.addEventListener('click', e => { if(e.target===scrim) closeReceipt(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && scrim.classList.contains('open')) closeReceipt(); });
@@ -680,6 +768,7 @@ document.getElementById('r-save').addEventListener('click', () => {
   }
   const ids = new Set(draft.map(d=>d.id));
   state.list = state.list.filter(i => !ids.has(i.id));
+  if(!state.list.length) state.mode = 'plan';
   saveTrip(trip); save(); closeReceipt(); render();
   const left = state.list.length;
   toast(`บันทึกการซื้อ ${thDate(date)} ฿${money(total)} แล้ว` + (left?` เหลือ ${left} รายการไว้ซื้อครั้งหน้า`:''));
